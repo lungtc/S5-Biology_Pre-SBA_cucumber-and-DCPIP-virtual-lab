@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SBA：青瓜抗壞血酸氧化酶與維生素 C ｜ 引導式虛擬實驗</title>
+<style>
+/* ==========================================================
+設計 tokens（老師可改顏色）
+DCPIP 藍 = 主色；青瓜綠 = 次色；番茄紅 = 錯誤提示
+========================================================== */
+:root{
+--bg:#EDF1EE; --surface:#FFFFFF; --surface2:#F5F8F6; --ink:#17212B; --muted:#4D5B66;
+--line:#CBD5CF; --dcpip:#2B56B5; --dcpip-soft:#E3EAF8; --cuke:#3F7A2E; --cuke-soft:#E4F0DF;
+--tomato:#B3332A; --tomato-soft:#FBE7E4; --amber:#8A5B00; --amber-soft:#FFF3D6;
+--focus:#F2B705; --radius-l:14px; --radius-s:8px;
+color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+:root:not([data-theme="light"]){
+--bg:#121A1F; --surface:#1B252C; --surface2:#222E36; --ink:#E8EEF2; --muted:#A9B7C1;
+--line:#34444F; --dcpip:#7FA3F0; --dcpip-soft:#22314F; --cuke:#8FCB7A; --cuke-soft:#22361E;
+--tomato:#F08A80; --tomato-soft:#43231F; --amber:#F2C66B; --amber-soft:#3B2F14;
+color-scheme: dark;
+}
+}
+*{box-sizing:border-box}
+html{font-size:17px; scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0; background:var(--bg); color:var(--ink);
+font-family:"PingFang HK","PingFang TC","Microsoft JhengHei","Noto Sans TC","Noto Sans CJK TC","Heiti TC",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+line-height:1.65; padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3{font-family:"Songti TC","Noto Serif TC","Noto Serif CJK TC","PMingLiU",Georgia,serif; line-height:1.3; margin:0 0 .5em}
+html[lang="en"] body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,"PingFang HK","Microsoft JhengHei","Noto Sans TC",sans-serif}
+html[lang="en"] h1,html[lang="en"] h2,html[lang="en"] h3{font-family:Georgia,"Times New Roman","Noto Serif TC",serif}
+h1{font-size:1.45rem} h2{font-size:1.35rem} h3{font-size:1.1rem}
+p{margin:.4em 0 .8em}
+button,select,input,textarea{font:inherit; font-size:1rem; color:inherit}
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+.wrap{max-width:1100px; margin:0 auto; padding:0 16px}
+
+/* ---------- Header ---------- */
+header{position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--line); padding-top:env(safe-area-inset-top,0px)}
+.topbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:10px 0}
+.topbar h1{flex:1 1 300px; margin:0; font-size:1.15rem}
+.topbar .sub{display:block; font-family:inherit; font-size:.85rem; color:var(--muted); font-weight:400}
+.toggles{display:flex; gap:8px; flex-wrap:wrap}
+.pill{border:1.5px solid var(--line); background:var(--surface2); border-radius:999px; padding:6px 14px; cursor:pointer; min-height:40px}
+.pill[aria-pressed="true"]{background:var(--dcpip); color:#fff; border-color:var(--dcpip)}
+
+/* 進度條：四支試管，完成度愈高，藍色 DCPIP 愈褪 */
+.progress{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:0 0 10px}
+.stage-btn{display:flex; align-items:center; gap:10px; text-align:left; border:1.5px solid var(--line); background:var(--surface2);
+border-radius:var(--radius-s); padding:6px 10px; cursor:pointer; min-height:48px}
+.stage-btn[aria-current="step"]{border-color:var(--dcpip); background:var(--dcpip-soft)}
+.stage-btn .lbl{font-size:.85rem; line-height:1.25}
+.stage-btn .lbl b{display:block; font-size:.95rem}
+.mini-tube{flex:0 0 auto}
+@media (max-width:640px){ .stage-btn .lbl span, .stage-btn .nm{display:none} .stage-btn{justify-content:center; gap:6px} header{position:static} .topbar h1{font-size:1.05rem} }
+
+main{padding:18px 0 60px}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-l); padding:18px 20px; margin:0 0 16px}
+.scenario{border-left:6px solid var(--cuke)}
+.q{border-top:1px solid var(--line); padding-top:14px; margin-top:14px}
+.q:first-of-type{border-top:0; margin-top:0; padding-top:0}
+.qtext{font-weight:600; margin-bottom:8px}
+.opts{display:grid; gap:8px}
+.opt{display:block; width:100%; text-align:left; border:1.5px solid var(--line); background:var(--surface2); border-radius:var(--radius-s);
+padding:10px 14px; cursor:pointer; min-height:44px}
+.opt:hover{border-color:var(--dcpip)}
+.opt.sel-ok{border-color:var(--cuke); background:var(--cuke-soft)}
+.opt.sel-bad{border-color:var(--tomato); background:var(--tomato-soft)}
+.opt.chk{border-color:var(--dcpip); background:var(--dcpip-soft)}
+.fb{margin-top:8px; padding:10px 14px; border-radius:var(--radius-s); font-size:.97rem}
+.fb.ok{background:var(--cuke-soft); border-left:5px solid var(--cuke)}
+.fb.hint{background:var(--amber-soft); border-left:5px solid var(--amber)}
+.fb.bad{background:var(--tomato-soft); border-left:5px solid var(--tomato)}
+.fb:empty{display:none}
+.btn{border:0; background:var(--dcpip); color:#fff; border-radius:var(--radius-s); padding:9px 16px; cursor:pointer; min-height:44px; font-weight:600}
+.btn.sec{background:var(--surface2); color:var(--ink); border:1.5px solid var(--line)}
+.btn.green{background:var(--cuke)}
+.btn.warn{background:var(--tomato)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.row{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+.nav-bottom{display:flex; justify-content:space-between; gap:10px; margin-top:8px}
+.teacher-only{display:none}
+body.teacher .teacher-only{display:block}
+body.teacher .opt[data-ok="1"]::after{content:" ✓"; color:var(--cuke); font-weight:700}
+.tag{display:inline-block; padding:1px 8px; border-radius:6px; font-size:.85rem; background:var(--dcpip-soft); color:var(--dcpip); font-weight:600}
+
+/* 拖放分類 */
+.bins{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:760px){ .bins{grid-template-columns:1fr} }
+.bin{border:2px dashed var(--line); border-radius:var(--radius-s); padding:10px; min-height:120px; background:var(--surface2)}
+.bin.over{border-color:var(--dcpip); background:var(--dcpip-soft)}
+.bin h4{margin:0 0 8px; font-size:.95rem}
+.chip{display:inline-block; margin:4px; padding:7px 12px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface);
+cursor:grab; min-height:40px; text-align:left}
+.chip.bad{border-color:var(--tomato)} .chip.good{border-color:var(--cuke)}
+
+/* 表格 */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse; width:100%; min-width:520px}
+th,td{border:1px solid var(--line); padding:7px 9px; text-align:center; vertical-align:middle}
+th{background:var(--surface2); font-weight:600}
+td.l, th.l{text-align:left}
+select{border:1.5px solid var(--line); border-radius:6px; padding:6px 8px; background:var(--surface); min-height:40px; max-width:100%}
+input[type=number],input[type=text],textarea{border:1.5px solid var(--line); border-radius:6px; padding:7px 9px; background:var(--surface); width:100%}
+input[type=number]{max-width:140px}
+textarea{min-height:90px; resize:vertical}
+input[type=range]{width:100%; accent-color:var(--dcpip); min-height:30px}
+
+/* 實驗室 */
+.lab{display:grid; grid-template-columns:minmax(260px,330px) 1fr; gap:16px}
+@media (max-width:820px){ .lab{grid-template-columns:1fr} }
+.ctrl{margin-bottom:12px}
+.ctrl label{display:block; font-weight:600; margin-bottom:2px}
+.ctrl .val{float:right; font-weight:700; color:var(--dcpip)}
+.bench{background:var(--surface2); border-radius:var(--radius-s); border:1px solid var(--line)}
+.bench svg{display:block; width:100%; height:auto; max-height:430px}
+.readout{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:10px 0}
+.readout div{background:var(--surface2); border:1px solid var(--line); border-radius:var(--radius-s); padding:6px 10px}
+.readout b{display:block; font-size:1.35rem; color:var(--dcpip); font-variant-numeric:tabular-nums}
+.readout span{font-size:.85rem; color:var(--muted)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media (max-width:760px){ .grid2{grid-template-columns:1fr} }
+.chart svg{width:100%; height:auto}
+.report{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-s); padding:16px}
+.report h3{margin-top:1em}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important} }
+
+/* 列印：只印報告 */
+@media print{
+header, .no-print, .nav-bottom{display:none!important}
+body{background:#fff; color:#000}
+body.print-report main > *:not(#report-panel){display:none!important}
+.panel{border:0; padding:0}
+}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap">
+<div class="topbar">
+<h1 id="title"></h1>
+<div class="toggles">
+<button class="pill" id="langBtn" onclick="toggleLang()" aria-label="中／英 切換 Chinese / English"></button>
+<button class="pill" id="teacherBtn" onclick="toggleTeacher()" aria-pressed="false"></button>
+</div>
+</div>
+<nav class="progress" id="progress" aria-label="Progress"></nav>
+</div>
+</header>
+<main class="wrap" id="app" tabindex="-1"></main>
+
+<script>
+/* ==========================================================================
+① 可調設定 CONFIG —— 老師主要改呢度
+--------------------------------------------------------------------------
+模擬模型（教學用簡化模型，並非真實動力學）：
+1. 剩餘維生素 C = 初始濃度 × exp(−k_eff × 時間)
+k_eff = K_ENZ × 酶活性(溫度) × 酶量因子 + 非酶氧化速率(溫度)
+2. 酶活性：以 37 °C 為最適溫度的鐘形曲線；45 °C 以上開始變性，
+60 °C 或以上活性 = 0。煮過的青瓜汁 / 蒸餾水：酶活性 = 0。
+3. 滴定：所需體積 ∝ 1 / 滴定液中維生素 C 濃度。
+校準：DCPIP 與抗壞血酸以 1:1 摩爾比反應。
+1 cm³ 0.01% DCPIP = 0.1 mg ≈ 0.345 µmol（DCPIP 鈉鹽 M ≈ 290 g/mol）
+需抗壞血酸 ≈ 0.345 µmol × 176 g/mol ≈ 0.061 mg ≈ 0.6 cm³ 0.01% 維生素 C
+→ 1 cm³ 0.01% DCPIP 約需 0.6 cm³（≈12 滴）0.01% 維生素 C。
+4. 新鮮青瓜汁本身含少量維生素 C／還原性物質（試管 A 會褪色）；
+煮沸會破壞部分維生素 C（試管 B 通常 40 滴內不褪色）。
+5. 每次滴定加入細小隨機誤差（約 ±1 滴），令重複數據有自然差異。
+========================================================================== */
+const CONFIG = {
+DROP_UL: 50, // 每滴體積 (µL)
+MAX_DROPS: 40, // 滴數上限（40 滴 = 2000 µL），超過即可停止
+DCPIP_CONC: 0.01, // DCPIP 濃度 (%)
+VITC_DEFAULT: 0.01, // 維生素 C 溶液預設濃度 (%)
+VITC_OPTIONS: [0.01, 0.001],
+VITC_VOL: 1.0, // 培育管中維生素 C 溶液體積 (cm³)，受控變數
+VITC_CM3_PER_CM3_DCPIP: 0.6, // 校準常數：1 cm³ 0.01% DCPIP 需幾多 cm³ 0.01% 維生素 C
+JUICE_VITC: { fresh: 0.0045, boiled: 0.0015, water: 0 }, // 液體本身「等效維生素 C」濃度 (%)
+K_ENZ: 0.15, // 酶催化速率常數 (每分鐘，於最適溫度、標準酶量)
+K_NONENZ_25: 0.002, // 25 °C 時維生素 C 自然氧化速率 (每分鐘)；每升 10 °C 加倍
+T_OPT: 37, // 最適溫度 (°C)
+T_SIGMA: 14, // 鐘形曲線闊度
+T_DENAT_START: 45, // 開始變性溫度 (°C)
+T_DENAT_END: 60, // 完全變性溫度 (°C)
+NOISE_SD: 0.6, // 隨機誤差標準差（滴）；限制喺 ±1.5 滴內
+ROOM_T: 25, // 室溫 (°C)
+STD_TIME: 10, // 標準培育時間 (分鐘)
+STD_JUICE_VOL: 1.0, // 標準青瓜汁體積 (cm³)
+STD_DCPIP_VOL: 1.0, // 標準 DCPIP 體積 (cm³)
+CALIB_DROPS: 40, // 校準活動滴數
+CALIB_TRUE_RANGE: [46, 54], // 校準時滴管「真實」每滴體積範圍 (µL)
+  SUBMIT_URL: 'https://script.google.com/a/macros/semple.edu.hk/s/AKfycbwAA3JqnVknaPIdoHyKb12aUJmoYk0nVtaz6-Joo1xKPWDAiYPlmnS3S8ymNaD6gOZw/exec'            // 老師：貼上 Google Apps Script 網頁應用程式網址（/exec 結尾），學生便可一鍵提交報告
+};
+
+/* ==========================================================================
+② 狀態（只用 JS 變數，不用 localStorage）
+========================================================================== */
+const S = {
+lang: 'zh', stage: 1, teacher: false,
+s1: { ans: {}, bins: {}, cvChecked: false, cvOk: false },
+s2: { app: {}, appChecked: null, group: {}, groupChecked: null, pred: {},
+calib: { trials: [], drops: 0, trueUL: null, reading: '', perDrop: '', msg: null } },
+lab: { tube: 'C', juice: 'fresh', vitC: CONFIG.VITC_DEFAULT, juiceVol: CONFIG.STD_JUICE_VOL,
+time: CONFIG.STD_TIME, temp: CONFIG.ROOM_T, dcpipVol: CONFIG.STD_DCPIP_VOL, reps: 3,
+phase: 'setup', trial: null, drops: 0, incElapsed: 0, speed: 30, incRunning: false,
+fast: false, msg: null, kOverride: null },
+results: {}, // key → {key, short, label, params, trials:[{v, over}]}
+resultOrder: [],
+s4: { ans: {}, multi: {}, text: { concl: '', e1e2: '', limits: '', improve: '' } },
+student: { name: '', cls: '' }
+};
+
+/* 計時器 handle */
+let incTimer = null, fastTimer = null, dropAnimating = false;
+
+/* ==========================================================================
+③ 小工具
+========================================================================== */
+const $ = id => document.getElementById(id);
+const L = (zh, en) => S.lang === 'zh' ? zh : en;
+const tx = o => (o && typeof o === 'object') ? (S.lang === 'zh' ? o.zh : o.en) : (o || '');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (n, d = 1) => Number(n).toFixed(d);
+function randNoise(){ // 近似常態分佈，限制 ±1.5 滴
+let r = 0; for (let i = 0; i < 4; i++) r += Math.random(); r = (r - 2) / 0.577; // sd≈1
+return Math.max(-1.5, Math.min(1.5, r * CONFIG.NOISE_SD));
+}
+function mixColor(a, b, t){ // a→b, t∈[0,1]
+return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
+}
+
+/* ==========================================================================
+④ 模擬模型
+========================================================================== */
+/** 酶活性 (0–1)，只有新鮮青瓜汁有活性 */
+function enzymeActivity(T, juice){
+if (juice !== 'fresh') return 0; // 煮過 = 已變性；蒸餾水 = 無酶
+if (T >= CONFIG.T_DENAT_END) return 0; // 高溫完全變性
+let a = Math.exp(-Math.pow((T - CONFIG.T_OPT) / CONFIG.T_SIGMA, 2));
+if (T > CONFIG.T_DENAT_START) // 45–60 °C 線性下降至 0
+a *= (CONFIG.T_DENAT_END - T) / (CONFIG.T_DENAT_END - CONFIG.T_DENAT_START);
+return a;
+}
+/** 非酶自然氧化速率（每升 10 °C 加倍） */
+const kNonEnz = T => CONFIG.K_NONENZ_25 * Math.pow(2, (T - 25) / 10);
+const kEnz = () => S.lab.kOverride ?? CONFIG.K_ENZ;
+
+/** 計算一次實驗的滴定液維生素 C 濃度（%） */
+function computeTrial(p){
+const r = { initial: 0, remaining: 0, activity: 0, kEff: 0, isE: p.tube === 'E' };
+if (p.tube === 'A') r.initial = CONFIG.JUICE_VITC.fresh;
+else if (p.tube === 'B') r.initial = CONFIG.JUICE_VITC.boiled;
+else if (p.tube === 'C') r.initial = p.vitC;
+else if (p.tube === 'D') r.initial = 0;
+else {
+// 培育管：1 cm³ 維生素 C + V cm³ 液體，兩者混合後被稀釋
+const V = p.juiceVol, Vc = CONFIG.VITC_VOL;
+r.initial = (Vc * p.vitC + V * CONFIG.JUICE_VITC[p.juice]) / (Vc + V);
+// 酶量因子：混合物中青瓜汁比例 ÷ 標準比例 (1:1 = 0.5)
+const enzFactor = (V / (Vc + V)) / 0.5;
+r.activity = enzymeActivity(p.temp, p.juice);
+r.kEff = kEnz() * r.activity * enzFactor + kNonEnz(p.temp);
+}
+r.remaining = r.isE ? r.initial * Math.exp(-r.kEff * p.time) : r.initial;
+r.theory = theoreticalDrops(p.dcpipVol, r.remaining);
+return r;
+}
+/** 理論所需滴數：所需體積 ∝ DCPIP 量 / 維生素 C 濃度 */
+function theoreticalDrops(dcpipVol, conc){
+if (conc <= 0) return Infinity;
+const vol_cm3 = dcpipVol * (CONFIG.DCPIP_CONC / 0.01) * CONFIG.VITC_CM3_PER_CM3_DCPIP * (0.01 / conc);
+return vol_cm3 * 1000 / CONFIG.DROP_UL;
+}
+
+/* ==========================================================================
+⑤ 題目資料（中英）
+ok:true = 正確答案；fb = 回饋（答錯時只係 hint，不直接給答案）
+========================================================================== */
+const Q1 = [
+{ id:'hyp', q:{zh:'根據情境，以下哪一個是最合適、可以用實驗驗證的假設 (hypothesis)？', en:'Based on the scenario, which is the most suitable testable hypothesis?'},
+opts:[
+{ok:true, t:{zh:'新鮮青瓜汁中的抗壞血酸氧化酶 (ascorbate oxidase) 會催化維生素 C 氧化，令維生素 C 含量下降。', en:'Ascorbate oxidase in fresh cucumber juice catalyses the oxidation of vitamin C, lowering the vitamin C content.'},
+fb:{zh:'正確！呢個假設指出咗原因（酶）同一個可以量度嘅結果（維生素 C 含量），可以用 DCPIP 測試驗證。', en:'Correct! It names a cause (the enzyme) and a measurable outcome (vitamin C content) that DCPIP can test.'}},
+{t:{zh:'同時吃青瓜和番茄對健康有害。', en:'Eating cucumber and tomato together is harmful to health.'},
+fb:{zh:'提示：「對健康有害」可以點樣喺實驗室量度？假設應該包含一個可以量度嘅變數。', en:'Hint: how would you measure “harmful to health” in a lab? A hypothesis should involve a measurable variable.'}},
+{t:{zh:'青瓜含有維生素 C，所以可以補充番茄的維生素 C。', en:'Cucumber contains vitamin C, so it adds to the vitamin C of tomato.'},
+fb:{zh:'提示：龍 sir 想驗證嘅係咩說法？假設要回應情境入面嘅問題。', en:'Hint: which claim does Mr Lung want to test? The hypothesis should answer that question.'}},
+{t:{zh:'煮過的青瓜汁會令維生素 C 含量上升。', en:'Boiled cucumber juice increases vitamin C content.'},
+fb:{zh:'提示：情境提到嘅酶喺新鮮定煮過嘅青瓜汁入面先有活性？', en:'Hint: is the enzyme mentioned active in fresh or in boiled juice?'}}]},
+{ id:'iv', q:{zh:'在培育實驗（E1–E3）中，自變量 (independent variable) 是甚麼？', en:'In the incubation set-up (E1–E3), what is the independent variable?'},
+opts:[
+{ok:true, t:{zh:'加入維生素 C 溶液的液體種類：新鮮青瓜汁／煮過的青瓜汁／蒸餾水（即有否活性抗壞血酸氧化酶）', en:'The liquid added to the vitamin C solution: fresh juice / boiled juice / distilled water (i.e. presence of active ascorbate oxidase)'},
+fb:{zh:'正確！自變量係你刻意改變嘅因素。', en:'Correct! The independent variable is the factor you deliberately change.'}},
+{t:{zh:'令 DCPIP 褪色所需的體積', en:'Volume needed to decolourise DCPIP'},
+fb:{zh:'提示：呢個係你量度出嚟嘅數值。自變量係你「刻意改變」嘅嘢。', en:'Hint: this is what you measure. The independent variable is what you deliberately change.'}},
+{t:{zh:'培育時間', en:'Incubation time'},
+fb:{zh:'提示：E1、E2、E3 嘅培育時間有冇唔同？三支管都一樣嘅話，佢係咩變數？', en:'Hint: do E1, E2 and E3 differ in incubation time? If all the same, what kind of variable is it?'}},
+{t:{zh:'DCPIP 溶液的濃度', en:'Concentration of DCPIP'},
+fb:{zh:'提示：三支 DCPIP 管用嘅 DCPIP 濃度係咪一樣？', en:'Hint: is the same DCPIP concentration used in all three tubes?'}}]},
+{ id:'dv', q:{zh:'應變量 (dependent variable) 是甚麼？', en:'What is the dependent variable?'},
+opts:[
+{ok:true, t:{zh:'令 1 cm³ DCPIP 褪色所需的混合物體積（滴數），用以反映剩餘的維生素 C 含量', en:'Volume (drops) of mixture needed to decolourise 1 cm³ DCPIP, reflecting the remaining vitamin C'},
+fb:{zh:'正確！所需體積愈少 → 混合物中維生素 C 濃度愈高。', en:'Correct! The smaller the volume needed, the higher the vitamin C concentration.'}},
+{t:{zh:'青瓜汁的顏色', en:'Colour of the cucumber juice'},
+fb:{zh:'提示：你實際記錄落結果表嘅係咩數值？', en:'Hint: what number do you actually record in the results table?'}},
+{t:{zh:'抗壞血酸氧化酶的活性', en:'Activity of ascorbate oxidase'},
+fb:{zh:'提示：酶活性有冇直接量度？我哋係量度咩嘢嚟間接推斷？', en:'Hint: is enzyme activity measured directly? What do we measure to infer it?'}},
+{t:{zh:'室溫', en:'Room temperature'},
+fb:{zh:'提示：室溫係你要保持不變嘅條件，定係量度出嚟嘅結果？', en:'Hint: is room temperature kept constant, or is it a result you measure?'}}]},
+{ id:'boiled', q:{zh:'決策題：點解 E2 要用煮過的青瓜汁？', en:'Decision: why use boiled cucumber juice in E2?'},
+opts:[
+{ok:true, t:{zh:'加熱令酶變性 (denatured) 失去活性；E2 除咗冇活性酶，其他成分同 E1 一樣，可以證明維生素 C 減少係由酶引起。', en:'Heating denatures the enzyme. E2 is identical to E1 except it lacks active enzyme, so any vitamin C loss in E1 can be attributed to the enzyme.'},
+fb:{zh:'正確！呢個係對照 (control)。沸水浴破壞維持酶三維結構嘅鍵，活性部位 (active site) 變形，受質（維生素 C）唔能夠再結合。如果 E1 維生素 C 明顯減少而 E2 冇，差異就可以歸因於酶。', en:'Correct! This is a control. Boiling breaks bonds holding the 3-D structure, so the active site changes shape and the substrate (vitamin C) can no longer bind. If E1 loses vitamin C but E2 does not, the difference is due to the enzyme.'}},
+{t:{zh:'煮過的青瓜汁中酶的活性更高，反應更快。', en:'Boiled juice has higher enzyme activity, so the reaction is faster.'},
+fb:{zh:'唔啱。高溫會破壞酶嘅三維結構，令活性部位變形 → 酶變性，活性喪失，而且係不可逆嘅。諗吓：咁 E2 喺實驗中可以扮演咩角色？', en:'Not quite. High temperature destroys the enzyme’s 3-D structure and active site — it is denatured irreversibly. So what role could E2 play?'}},
+{t:{zh:'煮過的青瓜汁比較衞生，可以殺死細菌。', en:'Boiled juice is more hygienic as bacteria are killed.'},
+fb:{zh:'加熱的確會殺菌，但呢個唔係實驗設計嘅目的。諗吓：E1 同 E2 之間唯一嘅分別應該係乜？', en:'Heating does kill bacteria, but that is not the purpose. What should be the only difference between E1 and E2?'}},
+{t:{zh:'煮過的青瓜汁不含任何物質，所以可以當作空白。', en:'Boiled juice contains nothing, so it acts as a blank.'},
+fb:{zh:'煮過嘅青瓜汁仍然有青瓜嘅其他成分（色素、糖、少量未被破壞嘅維生素 C）。佢唔係「空白」，而係「除咗酶冇活性之外，其他條件一樣」嘅對照。', en:'Boiled juice still contains other cucumber substances (pigments, sugars, some vitamin C). It is not a blank, but a control identical except for active enzyme.'}}]},
+{ id:'water', q:{zh:'決策題：E3 用蒸餾水代替青瓜汁，有咩作用？', en:'Decision: what is the purpose of using distilled water in E3?'},
+opts:[
+{ok:true, t:{zh:'蒸餾水冇酶亦冇維生素 C 來源，E3 顯示維生素 C 只被稀釋（冇被分解）時所需的體積，作為標準 (standard) 同其他組比較。', en:'Distilled water has no enzyme and no vitamin C. E3 shows the volume needed when vitamin C is only diluted, not broken down — a standard for comparison.'},
+fb:{zh:'正確！E1、E2 都有 1:1 稀釋，所以要用同樣稀釋咗嘅 E3 做標準，先可以公平比較。', en:'Correct! E1 and E2 are diluted 1:1 too, so E3 (diluted equally) is a fair standard.'}},
+{t:{zh:'蒸餾水可以令維生素 C 分解得更快。', en:'Distilled water makes vitamin C break down faster.'},
+fb:{zh:'提示：蒸餾水入面有冇酶？佢會唔會催化氧化？', en:'Hint: does distilled water contain any enzyme to catalyse oxidation?'}},
+{t:{zh:'蒸餾水用嚟清洗試管。', en:'Distilled water is used to rinse the tubes.'},
+fb:{zh:'提示：E3 有完整嘅培育同滴定步驟，佢一定有比較用途。', en:'Hint: E3 goes through full incubation and titration, so it must be for comparison.'}},
+{t:{zh:'蒸餾水含有少量維生素 C，可以補充。', en:'Distilled water contains a little vitamin C.'},
+fb:{zh:'提示：蒸餾水係純水。正正因為佢「乜都冇」，佢可以作為咩？', en:'Hint: distilled water is pure. Because it contains “nothing”, what can it serve as?'}}]},
+{ id:'tubeAD', q:{zh:'決策題：試管 A–D（樣本本身的維生素 C 含量）有咩目的？', en:'Decision: what is the purpose of tubes A–D (vitamin C in each sample)?'},
+opts:[
+{ok:true, t:{zh:'檢查每種液體本身會唔會令 DCPIP 褪色（例如新鮮青瓜汁本身含少量維生素 C），咁先可以正確解釋 E1–E3 的結果。', en:'To check whether each liquid itself decolourises DCPIP (e.g. fresh juice has a little vitamin C), so E1–E3 can be interpreted correctly.'},
+fb:{zh:'正確！試管 C 亦確認 DCPIP 運作正常；試管 D 顯示單靠稀釋唔會令 DCPIP 褪色。', en:'Correct! Tube C also confirms DCPIP works; tube D shows dilution alone does not decolourise DCPIP.'}},
+{t:{zh:'測試 DCPIP 有冇過期。', en:'To test whether DCPIP has expired.'},
+fb:{zh:'試管 C 的確可以確認 DCPIP 正常，但 A、B、D 有咩用？如果青瓜汁本身都令 DCPIP 褪色，會點影響你解讀 E1？', en:'Tube C does check DCPIP, but what about A, B and D? If juice itself decolourises DCPIP, how does that affect E1?'}},
+{t:{zh:'唔需要，可以直接做 E1–E3。', en:'Not needed; go straight to E1–E3.'},
+fb:{zh:'提示：如果唔知青瓜汁本身含幾多還原性物質，你點分辨 E1 嘅結果係由酶定係青瓜汁成分造成？', en:'Hint: without knowing the reducing substances in the juice itself, how could you tell whether E1’s result is due to the enzyme?'}}]}
+];
+
+/* 受控變數分類（拖放）：cv:true = 應放入「受控變數」 */
+const CV_CHIPS = [
+{id:'dcpipVol', cv:true, t:{zh:'DCPIP 溶液體積', en:'Volume of DCPIP'}, h:{zh:'如果 DCPIP 體積不同，需要嘅滴數會點？', en:'If the DCPIP volume differed, how would the number of drops change?'}},
+{id:'dcpipConc', cv:true, t:{zh:'DCPIP 溶液濃度', en:'Concentration of DCPIP'}, h:{zh:'DCPIP 濃一啲，要幾多維生素 C 先褪色？', en:'With more concentrated DCPIP, how much vitamin C is needed?'}},
+{id:'vcVol', cv:true, t:{zh:'維生素 C 溶液體積', en:'Volume of vitamin C solution'}, h:{zh:'起始維生素 C 量唔同，結果仲可唔可以比較？', en:'If the starting amount of vitamin C differs, can results be compared?'}},
+{id:'vcConc', cv:true, t:{zh:'維生素 C 溶液濃度', en:'Concentration of vitamin C'}, h:{zh:'起始濃度唔同，所需滴數會唔會受影響？', en:'Would a different starting concentration affect the drops needed?'}},
+{id:'time', cv:true, t:{zh:'培育時間', en:'Incubation time'}, h:{zh:'如果培育時間不同，邊個變數會受影響？', en:'If incubation time differed, which variable would be affected?'}},
+{id:'temp', cv:true, t:{zh:'溫度', en:'Temperature'}, h:{zh:'溫度會唔會影響酶活性？', en:'Does temperature affect enzyme activity?'}},
+{id:'juiceVol', cv:true, t:{zh:'青瓜汁體積', en:'Volume of cucumber juice'}, h:{zh:'青瓜汁多啲，酶嘅量同稀釋程度會點變？', en:'With more juice, how do enzyme amount and dilution change?'}},
+{id:'dropVol', cv:true, t:{zh:'每滴體積（用同一支滴管、同一握法）', en:'Volume per drop (same dropper, same technique)'}, h:{zh:'如果每滴大細唔同，「滴數」仲代唔代表同一體積？', en:'If drop size varied, would “number of drops” still mean the same volume?'}},
+{id:'juiceType', cv:false, t:{zh:'青瓜汁種類（新鮮／煮過／蒸餾水）', en:'Type of liquid (fresh / boiled / water)'}, h:{zh:'呢個係你刻意改變嘅因素，佢叫咩變數？', en:'You deliberately change this. What kind of variable is it?'}},
+{id:'drops', cv:false, t:{zh:'DCPIP 褪色所需滴數', en:'Drops needed to decolourise DCPIP'}, h:{zh:'呢個係你量度嘅結果，佢係咩變數？', en:'This is the result you measure. What kind of variable is it?'}},
+{id:'label', cv:false, t:{zh:'試管標籤貼紙的顏色', en:'Colour of tube labels'}, h:{zh:'會唔會影響結果？唔影響結果嘅因素唔需要控制。', en:'Does it affect the result? Factors with no effect need not be controlled.'}}
+];
+
+/* 階段 2：儀器 */
+const APPARATUS = [
+{id:'beaker', need:true, t:{zh:'燒杯 (100 cm³) ×4', en:'Beakers (100 cm³) ×4'}, why:{zh:'盛載各種溶液', en:'hold each solution'}},
+{id:'tube', need:true, t:{zh:'試管 ×10', en:'Test tubes ×10'}, why:{zh:'A–D、E1–E3、E1′–E3′ 共 10 支', en:'A–D, E1–E3, E1′–E3′ = 10 tubes'}},
+{id:'rack', need:true, t:{zh:'試管架', en:'Test-tube rack'}, why:{zh:'放置試管', en:'hold tubes'}},
+{id:'marker', need:true, t:{zh:'防水筆／貼紙', en:'Marker / labels'}, why:{zh:'標示試管，避免混淆', en:'label tubes to avoid mix-ups'}},
+{id:'cyl', need:true, t:{zh:'量筒 (5 cm³)', en:'Measuring cylinders (5 cm³)'}, why:{zh:'準確量取 1 cm³ DCPIP、維生素 C、青瓜汁；亦用嚟校準每滴體積', en:'measure 1 cm³ volumes; calibrate drop volume'}},
+{id:'dropper', need:true, t:{zh:'滴管', en:'Droppers'}, why:{zh:'逐滴加入，每種液體用獨立滴管避免污染', en:'add drop by drop; separate droppers avoid contamination'}},
+{id:'tile', need:true, t:{zh:'白瓷磚', en:'White tile'}, why:{zh:'白色背景方便判斷褪色終點', en:'white background to judge the end-point'}},
+{id:'watch', need:true, t:{zh:'秒錶', en:'Stopwatch'}, why:{zh:'控制培育時間 10 分鐘', en:'time the 10-min incubation'}},
+{id:'micro', need:false, t:{zh:'顯微鏡', en:'Microscope'}, why:{zh:'提示：實驗有冇需要觀察細胞？', en:'Hint: do we need to look at cells?'}},
+{id:'balance', need:false, t:{zh:'電子天平', en:'Electronic balance'}, why:{zh:'提示：溶液已預先配好，仲需要秤重嗎？', en:'Hint: solutions are prepared already — any need to weigh?'}},
+{id:'bunsen', need:false, t:{zh:'本生燈', en:'Bunsen burner'}, why:{zh:'提示：煮過嘅青瓜汁已提供；而且加熱會影響其他管嘅溫度控制。', en:'Hint: boiled juice is provided; heating could also upset temperature control.'}},
+{id:'thermo', need:null, t:{zh:'溫度計', en:'Thermometer'}, why:{zh:'清單冇提供，但記錄室溫係好習慣（可寫入改良）', en:'not on the list, but recording room temperature is good practice (an improvement)'}}
+];
+
+/* 階段 2：分組 */
+const TUBES = ['A','B','C','D','E1','E2','E3'];
+const CONTENTS = [
+{id:'o1', t:{zh:'1 cm³ DCPIP ＋ 逐滴加新鮮青瓜汁', en:'1 cm³ DCPIP + fresh juice drop by drop'}},
+{id:'o2', t:{zh:'1 cm³ DCPIP ＋ 逐滴加煮過的青瓜汁', en:'1 cm³ DCPIP + boiled juice drop by drop'}},
+{id:'o3', t:{zh:'1 cm³ DCPIP ＋ 逐滴加維生素 C 溶液', en:'1 cm³ DCPIP + vitamin C drop by drop'}},
+{id:'o4', t:{zh:'1 cm³ DCPIP ＋ 逐滴加蒸餾水', en:'1 cm³ DCPIP + distilled water drop by drop'}},
+{id:'o5', t:{zh:'1 cm³ 維生素 C ＋ 1 cm³ 新鮮青瓜汁，培育 10 分鐘後滴入 DCPIP', en:'1 cm³ vit C + 1 cm³ fresh juice, incubate 10 min, then titrate'}},
+{id:'o6', t:{zh:'1 cm³ 維生素 C ＋ 1 cm³ 煮過的青瓜汁，培育 10 分鐘後滴入 DCPIP', en:'1 cm³ vit C + 1 cm³ boiled juice, incubate 10 min, then titrate'}},
+{id:'o7', t:{zh:'1 cm³ 維生素 C ＋ 1 cm³ 蒸餾水，培育 10 分鐘後滴入 DCPIP', en:'1 cm³ vit C + 1 cm³ water, incubate 10 min, then titrate'}}
+];
+const GROUP_ANS = {A:'o1',B:'o2',C:'o3',D:'o4',E1:'o5',E2:'o6',E3:'o7'};
+const ROLE = {
+A:{zh:'樣本：青瓜汁本身有冇維生素 C', en:'sample: vitamin C in fresh juice itself'},
+B:{zh:'樣本：煮過青瓜汁本身有冇維生素 C', en:'sample: vitamin C in boiled juice itself'},
+C:{zh:'正對照：確認 DCPIP 會被維生素 C 還原', en:'positive control: DCPIP is reduced by vitamin C'},
+D:{zh:'負對照：單靠稀釋唔會褪色', en:'negative control: dilution alone does not decolourise'},
+E1:{zh:'實驗組：有活性酶', en:'experimental: active enzyme'},
+E2:{zh:'對照：酶已變性', en:'control: denatured enzyme'},
+E3:{zh:'標準：無酶、無額外維生素 C，只有稀釋', en:'standard: no enzyme, no extra vit C, dilution only'}
+};
+const PRED_CATS = [
+{id:'lt15', t:{zh:'少（< 15 滴）', en:'Few (< 15 drops)'}, test:v=>v<15},
+{id:'15to30', t:{zh:'中等（15–30 滴）', en:'Moderate (15–30)'}, test:v=>v>=15&&v<=30},
+{id:'31to40', t:{zh:'多（31–40 滴）', en:'Many (31–40)'}, test:v=>v>30&&v<=40},
+{id:'over', t:{zh:'40 滴仍未褪色', en:'Not decolourised by 40'}, test:(v,over)=>over}
+];
+
+/* 階段 4 題目 */
+const Q4 = [
+{ id:'concl', q:{zh:'E1 所需的混合物體積比 E2、E3 多（或 40 滴仍未褪色）。這表示甚麼？', en:'E1 needed more mixture than E2 and E3 (or did not decolourise by 40 drops). What does this show?'},
+opts:[
+{ok:true, t:{zh:'E1 剩餘的維生素 C 較少，因為新鮮青瓜汁中有活性的抗壞血酸氧化酶催化維生素 C 氧化。', en:'E1 has less vitamin C left, because active ascorbate oxidase in fresh juice catalysed its oxidation.'},
+fb:{zh:'正確！所需體積愈多 → 每滴含嘅維生素 C 愈少。', en:'Correct! More volume needed → less vitamin C per drop.'}},
+{t:{zh:'E1 剩餘的維生素 C 較多。', en:'E1 has more vitamin C left.'},
+fb:{zh:'提示：諗返 DCPIP 原理——所需體積愈多，每滴含嘅維生素 C 係多定少？', en:'Hint: recall the principle — if more volume is needed, is there more or less vitamin C per drop?'}},
+{t:{zh:'DCPIP 在 E1 失效。', en:'DCPIP failed in E1.'},
+fb:{zh:'提示：所有 DCPIP 管都用同一瓶溶液，C、E2、E3 都正常褪色。有冇更合理嘅解釋？', en:'Hint: all tubes used the same DCPIP, and C, E2, E3 worked. Is there a better explanation?'}},
+{t:{zh:'新鮮青瓜汁本身沒有維生素 C。', en:'Fresh juice contains no vitamin C.'},
+fb:{zh:'提示：睇返試管 A 嘅結果。', en:'Hint: look at tube A’s result.'}}]},
+{ id:'e1e2', q:{zh:'E1 和 E2 唯一的分別是青瓜汁有否被煮沸。哪一項最能解釋兩者結果的差異？', en:'E1 and E2 differ only in whether the juice was boiled. Which best explains the difference?'},
+opts:[
+{ok:true, t:{zh:'煮沸令抗壞血酸氧化酶變性，E2 的維生素 C 不被酶氧化；E1 的酶有活性，把維生素 C 氧化成脫氫抗壞血酸 (dehydroascorbic acid)，它不能還原 DCPIP。', en:'Boiling denatured the enzyme, so E2’s vitamin C was not oxidised; in E1 the active enzyme oxidised vitamin C to dehydroascorbic acid, which cannot reduce DCPIP.'},
+fb:{zh:'正確！注意用詞：酶「變性」(denatured)，唔好寫「死咗」。', en:'Correct! Say “denatured”, not “killed”.'}},
+{t:{zh:'E2 的青瓜汁本身含有更多維生素 C。', en:'Boiled juice itself contains more vitamin C.'},
+fb:{zh:'提示：比較試管 A 同 B——加熱會增加定破壞維生素 C？', en:'Hint: compare tubes A and B — does heating add or destroy vitamin C?'}},
+{t:{zh:'E1 的培育溫度較高。', en:'E1 was incubated at a higher temperature.'},
+fb:{zh:'提示：E1 同 E2 都喺室溫培育，溫度係受控變數。', en:'Hint: both were at room temperature — a controlled variable.'}},
+{t:{zh:'E1 的培育時間較長。', en:'E1 was incubated for longer.'},
+fb:{zh:'提示：兩者都培育 10 分鐘。差異來自唯一被改變嘅因素。', en:'Hint: both were 10 min. The difference comes from the one factor changed.'}}]},
+{ id:'hypc', q:{zh:'你的結果是否支持龍 sir 的假設？', en:'Do your results support Mr Lung’s hypothesis?'},
+opts:[
+{ok:true, t:{zh:'支持：只有含活性酶的 E1 維生素 C 明顯減少；但這是試管實驗，未能直接推論到真實進食沙律的情況。', en:'Supported: only E1 (active enzyme) lost much vitamin C — but this is a test-tube model and cannot be directly applied to eating a salad.'},
+fb:{zh:'正確！用「支持」(support) 而唔係「證明」(prove)，並指出局限。', en:'Correct! Use “support”, not “prove”, and state the limitation.'}},
+{t:{zh:'完全證明：吃青瓜番茄沙律一定會損失所有維生素 C。', en:'Proved: a cucumber-tomato salad always loses all its vitamin C.'},
+fb:{zh:'提示：實驗用嘅係維生素 C 溶液，唔係真番茄；時間、溫度都同真實情況唔同。結論可以咁絕對嗎？', en:'Hint: we used vitamin C solution, not real tomato, with different time and temperature. Can the conclusion be that absolute?'}},
+{t:{zh:'不支持，因為試管 A 也褪色。', en:'Not supported, because tube A also decolourised.'},
+fb:{zh:'提示：試管 A 褪色只表示青瓜汁本身有少量維生素 C。E1 已包含呢部分，但仍然需要最多體積，即係……？', en:'Hint: tube A only shows the juice has a little vitamin C. E1 includes this yet still needs the most volume, which means…?'}}]},
+{ id:'tubeA', q:{zh:'點解只加新鮮青瓜汁（試管 A）都會令 DCPIP 褪色？', en:'Why does fresh juice alone (tube A) decolourise DCPIP?'},
+opts:[
+{ok:true, t:{zh:'新鮮青瓜汁本身含少量維生素 C（及其他還原性物質），可以還原 DCPIP。', en:'Fresh juice contains a little vitamin C (and other reducing substances) that reduce DCPIP.'},
+fb:{zh:'正確！所以 E1 嘅起始維生素 C 其實略高於 E3。', en:'Correct! So E1 actually starts with slightly more vitamin C than E3.'}},
+{t:{zh:'青瓜汁的綠色遮蓋了藍色。', en:'The green juice masks the blue.'},
+fb:{zh:'顏色混合只會變藍綠，唔會變無色；真正褪色係因為 DCPIP 被還原。不過青瓜汁嘅顏色的確令終點難判斷——可以寫入局限！', en:'Mixing colours gives blue-green, not colourless; true decolourisation means DCPIP is reduced. But the juice colour does make the end-point harder to judge — a limitation!'}},
+{t:{zh:'抗壞血酸氧化酶直接分解 DCPIP。', en:'Ascorbate oxidase breaks down DCPIP directly.'},
+fb:{zh:'提示：酶具專一性 (specificity)。抗壞血酸氧化酶嘅受質係乜？', en:'Hint: enzymes are specific. What is ascorbate oxidase’s substrate?'}}]}
+];
+const Q4M = [
+{ id:'reliab', q:{zh:'以下哪些做法可以提高結果的可靠性 (reliability)？（可選多項）', en:'Which improve the reliability of results? (choose all that apply)'},
+opts:[
+{ok:true, t:{zh:'每組重複三次並計算平均值', en:'Repeat each set three times and calculate the mean'}},
+{ok:true, t:{zh:'檢查重複數據是否接近（範圍細），找出異常值', en:'Check repeats are close (small range) and identify anomalies'}},
+{ok:true, t:{zh:'匯總全班數據作比較', en:'Pool and compare class results'}},
+{ok:false, t:{zh:'只做一次但非常小心', en:'Do it once, very carefully'}, fb:{zh:'只做一次就無法知道結果係咪一致，亦發現唔到異常值。', en:'With one trial you cannot tell whether results are consistent or spot anomalies.'}},
+{ok:false, t:{zh:'每次重複用不同濃度的 DCPIP', en:'Use a different DCPIP concentration each repeat'}, fb:{zh:'改變 DCPIP 濃度即係改變受控變數，重複之間就唔可以比較。', en:'Changing DCPIP concentration breaks a controlled variable; repeats become incomparable.'}}]},
+{ id:'accur', q:{zh:'以下哪些是影響準確度 (accuracy) 的局限？（可選多項）', en:'Which are limitations affecting accuracy? (choose all that apply)'},
+opts:[
+{ok:true, t:{zh:'每滴體積不一定是 50 µL（滴管角度、擠壓力度不同）', en:'Drop volume may not be exactly 50 µL (angle, squeeze force)'}},
+{ok:true, t:{zh:'褪色終點靠肉眼判斷，青瓜汁的綠色令終點難判斷', en:'The end-point is judged by eye; green juice makes it hard to see'}},
+{ok:true, t:{zh:'滴定期間酶仍在作用，E1 的維生素 C 持續減少', en:'The enzyme keeps working during titration, so E1’s vitamin C keeps falling'}},
+{ok:true, t:{zh:'室溫可能波動，影響酶活性', en:'Room temperature may fluctuate, affecting enzyme activity'}},
+{ok:false, t:{zh:'使用白瓷磚作背景', en:'Using a white tile as background'}, fb:{zh:'白瓷磚有助觀察顏色變化，係好做法，唔係局限。', en:'A white tile helps you see the colour change — good practice, not a limitation.'}}]},
+{ id:'improve', q:{zh:'選出合理的改良方法（可選多項）', en:'Choose sensible improvements (choose all that apply)'},
+opts:[
+{ok:true, t:{zh:'用滴定管 (burette) 或微量移液器 (micropipette) 代替滴管', en:'Use a burette or micropipette instead of a dropper'}},
+{ok:true, t:{zh:'用比色計 (colorimeter) 客觀量度褪色', en:'Use a colorimeter to measure decolourisation objectively'}},
+{ok:true, t:{zh:'用恆溫水浴 (water bath) 控制培育溫度', en:'Use a thermostatic water bath to control temperature'}},
+{ok:true, t:{zh:'培育後把混合物放入冰浴降低酶活性，再盡快滴定', en:'Put the mixture in an ice bath after incubation to slow the enzyme, then titrate quickly'}},
+{ok:false, t:{zh:'把 DCPIP 濃度提高至 1%', en:'Increase DCPIP to 1%'}, fb:{zh:'DCPIP 太濃，所需滴數會遠超 40 滴，無法量度。', en:'Too concentrated: drops needed would far exceed 40 and could not be measured.'}},
+{ok:false, t:{zh:'取消重複以節省時間', en:'Skip repeats to save time'}, fb:{zh:'減少重複會降低可靠性。', en:'Fewer repeats lowers reliability.'}}]}
+];
+
+/* ==========================================================================
+⑥ 共用 UI：選擇題
+========================================================================== */
+function mcqHTML(q, store, prefix){
+const a = store[q.id];
+const opts = q.opts.map((o, i) => {
+let cls = 'opt';
+if (a !== undefined && a === i) cls += o.ok ? ' sel-ok' : ' sel-bad';
+return `<button class="${cls}" data-ok="${o.ok?1:0}" id="${prefix}-${q.id}-${i}" onclick="answerMCQ('${prefix}','${q.id}',${i})">${esc(tx(o.t))}</button>`;
+}).join('');
+let fb = '';
+if (a !== undefined){ const o = q.opts[a]; fb = `<div class="fb ${o.ok?'ok':'hint'}">${esc(tx(o.fb))}</div>`; }
+return `<div class="q" id="q-${prefix}-${q.id}"><div class="qtext">${esc(tx(q.q))}</div>
+<div class="opts" role="group" aria-label="${esc(tx(q.q))}">${opts}</div><div aria-live="polite">${fb}</div></div>`;
+}
+function answerMCQ(prefix, id, i){
+const bank = prefix === 's1' ? Q1 : Q4; const store = prefix === 's1' ? S.s1.ans : S.s4.ans;
+store[id] = i;
+const q = bank.find(x => x.id === id);
+$(`q-${prefix}-${id}`).outerHTML = mcqHTML(q, store, prefix);
+$(`${prefix}-${id}-${i}`).focus();
+renderProgress();
+}
+function multiHTML(q){
+const st = S.s4.multi[q.id] || { sel: [], checked: false };
+const opts = q.opts.map((o, i) => {
+const on = st.sel.includes(i);
+let cls = 'opt' + (on ? ' chk' : '');
+if (st.checked && on) cls = 'opt ' + (o.ok ? 'sel-ok' : 'sel-bad');
+return `<button class="${cls}" data-ok="${o.ok?1:0}" aria-pressed="${on}" id="m-${q.id}-${i}" onclick="toggleMulti('${q.id}',${i})">${on?'☑':'☐'} ${esc(tx(o.t))}</button>`;
+}).join('');
+let fb = '';
+if (st.checked){
+const wrong = st.sel.filter(i => !q.opts[i].ok).map(i => '• ' + tx(q.opts[i].fb));
+const missing = q.opts.filter((o, i) => o.ok && !st.sel.includes(i)).length;
+if (!wrong.length && !missing) fb = `<div class="fb ok">${L('全部正確！','All correct!')}</div>`;
+else fb = `<div class="fb hint">${wrong.map(esc).join('<br>')}${missing?`${wrong.length?'<br>':''}${L(`仲有 ${missing} 個合理選項未揀。`,`${missing} sensible option(s) not yet chosen.`)}`:''}</div>`;
+}
+return `<div class="q" id="q-m-${q.id}"><div class="qtext">${esc(tx(q.q))}</div><div class="opts">${opts}</div>
+<div class="row" style="margin-top:8px"><button class="btn sec" onclick="checkMulti('${q.id}')">${L('檢查答案','Check')}</button></div><div aria-live="polite">${fb}</div></div>`;
+}
+function toggleMulti(id, i){
+const st = S.s4.multi[id] || (S.s4.multi[id] = { sel: [], checked: false });
+st.sel = st.sel.includes(i) ? st.sel.filter(x => x !== i) : [...st.sel, i]; st.checked = false;
+$(`q-m-${id}`).outerHTML = multiHTML(Q4M.find(q => q.id === id)); $(`m-${id}-${i}`).focus();
+}
+function checkMulti(id){
+const st = S.s4.multi[id] || (S.s4.multi[id] = { sel: [], checked: false }); st.checked = true;
+$(`q-m-${id}`).outerHTML = multiHTML(Q4M.find(q => q.id === id)); renderProgress();
+}
+
+/* ==========================================================================
+⑦ Header / 進度
+========================================================================== */
+const STAGES = [
+{zh:'情境與假設', en:'Scenario & hypothesis', d:{zh:'變數與對照', en:'variables & controls'}},
+{zh:'實驗設計', en:'Experimental design', d:{zh:'儀器、分組、校準', en:'apparatus, groups, calibration'}},
+{zh:'虛擬實驗室', en:'Virtual lab', d:{zh:'培育與滴定', en:'incubate & titrate'}},
+{zh:'分析與評鑑', en:'Analysis & evaluation', d:{zh:'作圖、結論、報告', en:'graph, conclusion, report'}}
+];
+function stageCompletion(n){
+if (n === 1){ const ids = ['hyp','iv','dv','boiled','water','tubeAD'];
+const done = ids.filter(id => { const a = S.s1.ans[id]; return a !== undefined && Q1.find(q => q.id === id).opts[a].ok; }).length + (S.s1.cvOk ? 1 : 0);
+return done / 7; }
+if (n === 2){ let d = 0; if (S.s2.appChecked?.ok) d++; if (S.s2.groupChecked?.ok) d++;
+if (TUBES.every(t => S.s2.pred[t])) d++; if (S.s2.calib.trials.length >= 2) d++; return d / 4; }
+if (n === 3){ return TUBES.filter(t => { const r = S.results[stdKey(t)]; return r && r.trials.length >= 3; }).length / 7; }
+const n4 = Object.keys(S.s4.ans).filter(id => { const q = Q4.find(x => x.id === id); return q.opts[S.s4.ans[id]].ok; }).length
++ Q4M.filter(q => S.s4.multi[q.id]?.checked).length + Object.values(S.s4.text).filter(t => t.trim().length > 10).length;
+return n4 / (Q4.length + Q4M.length + 4);
+}
+function miniTube(frac){ // 完成度愈高，DCPIP 藍色愈褪
+const col = mixColor([43,86,181],[236,242,238], Math.min(1, frac));
+return `<svg class="mini-tube" width="18" height="38" viewBox="0 0 18 38" aria-hidden="true">
+<path d="M3 2 V29 a6 6 0 0 0 12 0 V2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<path d="M4.2 12 V29 a4.8 4.8 0 0 0 9.6 0 V12 Z" fill="${col}"/></svg>`;
+}
+function renderProgress(){
+$('progress').innerHTML = STAGES.map((s, i) => {
+const f = stageCompletion(i + 1);
+return `<button class="stage-btn" ${S.stage===i+1?'aria-current="step"':''} onclick="goStage(${i+1})" aria-label="${L('階段','Stage')} ${i+1}: ${esc(tx(s))}, ${Math.round(f*100)}%">
+${miniTube(f)}<span class="lbl"><b>${i+1}.<span class="nm"> ${esc(tx(s))}</span></b><span>${esc(tx(s.d))} · ${Math.round(f*100)}%</span></span></button>`;
+}).join('');
+}
+function renderHeader(){
+$('title').innerHTML = `${L('青瓜會「偷走」番茄的維生素 C 嗎？','Does cucumber “steal” tomato’s vitamin C?')}
+<span class="sub">${L('DSE 生物 SBA：抗壞血酸氧化酶 (ascorbate oxidase) 與 DCPIP 測試','DSE Biology SBA: ascorbate oxidase and the DCPIP test')}</span>`;
+$('langBtn').textContent = S.lang === 'zh' ? 'English' : '中文';
+$('teacherBtn').textContent = L('老師模式','Teacher mode');
+$('teacherBtn').setAttribute('aria-pressed', S.teacher);
+document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant-HK' : 'en';
+renderProgress();
+}
+function toggleLang(){ S.lang = S.lang === 'zh' ? 'en' : 'zh'; renderAll(); }
+function toggleTeacher(){ S.teacher = !S.teacher; document.body.classList.toggle('teacher', S.teacher); renderAll(); }
+function goStage(n){ stopFast(); clearInterval(incTimer); S.lab.incRunning = false; S.stage = n; renderAll(); window.scrollTo(0,0); $('app').focus({preventScroll:true}); }
+function navBottom(){
+return `<div class="nav-bottom no-print">
+${S.stage>1?`<button class="btn sec" onclick="goStage(${S.stage-1})">${L('上一階段','Previous stage')}</button>`:'<span></span>'}
+${S.stage<4?`<button class="btn" onclick="goStage(${S.stage+1})">${L('下一階段','Next stage')}</button>`:''}</div>`;
+}
+function renderAll(){ renderHeader(); [null, renderS1, renderS2, renderS3, renderS4][S.stage](); }
+
+/* ==========================================================================
+⑧ 階段 1
+========================================================================== */
+function renderS1(){
+$('app').innerHTML = `
+<section class="panel scenario">
+<h2>${L('情境','Scenario')}</h2>
+<p>${L('龍 sir 愛吃青瓜番茄沙律。有一天，他在 IG 看到短片，建議不要同時吃青瓜和番茄，以免降低番茄的維生素 C 含量。',
+'Mr Lung loves cucumber-and-tomato salad. One day an Instagram video warned that eating cucumber with tomato lowers the tomato’s vitamin C.')}</p>
+<p>${L('他在網上讀到：青瓜含有抗壞血酸氧化酶 (ascorbate oxidase)，能催化抗壞血酸鹽（ascorbate，即維生素 C）的氧化反應。他想用實驗驗證這個說法。',
+'He read that cucumber contains ascorbate oxidase, which catalyses the oxidation of ascorbate (vitamin C). He wants to test this claim.')}</p>
+<p class="small muted">${L('原理提示：DCPIP 是藍色的氧化劑，被維生素 C 還原後會褪色。令定量 DCPIP 褪色所需的溶液體積愈少，表示溶液中的維生素 C 愈多。',
+'Principle: DCPIP is a blue oxidising agent; it turns colourless when reduced by vitamin C. The less solution needed to decolourise a fixed volume of DCPIP, the more vitamin C it contains.')}</p>
+</section>
+<section class="panel"><h2>${L('假設與變數','Hypothesis and variables')}</h2>
+${Q1.slice(0,3).map(q => mcqHTML(q, S.s1.ans, 's1')).join('')}
+</section>
+<section class="panel" id="cvPanel">${cvHTML()}</section>
+<section class="panel"><h2>${L('對照的決策','Decisions about controls')}</h2>
+${Q1.slice(3).map(q => mcqHTML(q, S.s1.ans, 's1')).join('')}
+</section>
+${navBottom()}`;
+}
+function cvHTML(){
+const bin = id => S.s1.bins[id] || 'pool';
+const chip = c => {
+let cls = 'chip';
+if (S.s1.cvChecked){ const b = bin(c.id); if (b !== 'pool') cls += ((b === 'cv') === c.cv) ? ' good' : ' bad'; }
+return `<button class="${cls}" draggable="true" id="chip-${c.id}" data-id="${c.id}"
+ondragstart="event.dataTransfer.setData('text/plain','${c.id}')" onclick="cycleChip('${c.id}')">${esc(tx(c.t))}</button>`;
+};
+const binBox = (id, title) => `<div class="bin" data-bin="${id}" ondragover="event.preventDefault();this.classList.add('over')"
+ondragleave="this.classList.remove('over')" ondrop="dropChip(event,'${id}')"><h4>${title}</h4>
+${CV_CHIPS.filter(c => bin(c.id) === id).map(chip).join('') || `<span class="small muted">${L('（空）','(empty)')}</span>`}</div>`;
+let fb = '';
+if (S.s1.cvChecked){
+const inCv = CV_CHIPS.filter(c => bin(c.id) === 'cv');
+const right = inCv.filter(c => c.cv).length, wrong = inCv.filter(c => !c.cv);
+const missed = CV_CHIPS.filter(c => c.cv && bin(c.id) === 'other');
+if (right >= 5 && !wrong.length && !missed.length)
+fb = `<div class="fb ok">${L(`做得好！你揀咗 ${right} 個受控變數。保持呢啲因素不變，先可以確定結果嘅差異只係由自變量引起（公平測試 fair test）。`,
+`Well done — ${right} controlled variables. Keeping these constant makes it a fair test.`)}</div>`;
+else {
+const hints = [...wrong, ...missed].map(c => `• <b>${esc(tx(c.t))}</b>：${esc(tx(c.h))}`);
+if (right < 5 && !hints.length) hints.push(L(`• 你暫時揀咗 ${right} 個，至少要 5 個。諗吓：有邊啲因素會影響維生素 C 量或者滴數？`,`• You have ${right}; at least 5 are needed. Which factors affect vitamin C or the drop count?`));
+fb = `<div class="fb hint">${hints.join('<br>')}</div>`;
+}
+}
+return `<h2>${L('受控變數 (controlled variables)','Controlled variables')}</h2>
+<p class="small muted">${L('把卡片拖入方格；或用 Tab 選中卡片，按 Enter 逐格移動（未分類 → 受控變數 → 不是受控變數）。至少揀 5 個受控變數。',
+'Drag cards into boxes, or Tab to a card and press Enter to move it (unsorted → controlled → not controlled). Choose at least 5.')}</p>
+<div class="bins">${binBox('pool', L('未分類','Unsorted'))}${binBox('cv', L('受控變數','Controlled variables'))}${binBox('other', L('不是受控變數','Not controlled variables'))}</div>
+<div class="row" style="margin-top:10px"><button class="btn" onclick="checkCV()">${L('檢查分類','Check')}</button>
+<button class="btn sec" onclick="S.s1.bins={};S.s1.cvChecked=false;S.s1.cvOk=false;rerenderCV()">${L('重設','Reset')}</button></div>
+<div aria-live="polite">${fb}</div>`;
+}
+function rerenderCV(focusId){ $('cvPanel').innerHTML = cvHTML(); if (focusId) $('chip-'+focusId)?.focus(); renderProgress(); }
+function cycleChip(id){ const order = ['pool','cv','other']; const b = S.s1.bins[id] || 'pool';
+S.s1.bins[id] = order[(order.indexOf(b)+1)%3]; S.s1.cvChecked = false; rerenderCV(id); }
+function dropChip(e, bin){ e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); if (!id) return;
+S.s1.bins[id] = bin; S.s1.cvChecked = false; rerenderCV(id); }
+function checkCV(){
+S.s1.cvChecked = true;
+const inCv = CV_CHIPS.filter(c => S.s1.bins[c.id] === 'cv');
+S.s1.cvOk = inCv.filter(c => c.cv).length >= 5 && inCv.every(c => c.cv) && !CV_CHIPS.some(c => c.cv && S.s1.bins[c.id] === 'other');
+rerenderCV();
+}
+
+/* ==========================================================================
+⑨ 階段 2：儀器、分組、預測、每滴體積校準
+========================================================================== */
+function renderS2(){
+$('app').innerHTML = `
+<section class="panel" id="appPanel">${appHTML()}</section>
+<section class="panel" id="groupPanel">${groupHTML()}</section>
+<section class="panel" id="calibPanel">${calibHTML()}</section>
+${navBottom()}`;
+}
+function appHTML(){
+const ck = S.s2.appChecked;
+const items = APPARATUS.map(a => {
+const on = !!S.s2.app[a.id];
+let cls = 'opt' + (on ? ' chk' : '');
+if (ck && a.need !== null){ if (on && !a.need) cls = 'opt sel-bad'; else if (on && a.need) cls = 'opt sel-ok'; }
+return `<button class="${cls}" data-ok="${a.need?1:0}" aria-pressed="${on}" id="app-${a.id}" onclick="S.s2.app['${a.id}']=!S.s2.app['${a.id}'];S.s2.appChecked=null;$('appPanel').innerHTML=appHTML();$('app-${a.id}').focus()">${on?'☑':'☐'} ${esc(tx(a.t))}</button>`;
+}).join('');
+let fb = '';
+if (ck){
+const lines = [];
+APPARATUS.forEach(a => {
+const on = !!S.s2.app[a.id];
+if (a.need && !on) lines.push(`• ${L('未揀','Missing')}：${esc(tx(a.t))} — ${L('諗吓：邊個步驟會用到？','which step would need it?')}`);
+if (a.need === false && on) lines.push(`• ${esc(tx(a.t))}：${esc(tx(a.why))}`);
+if (a.need === null && on) lines.push(`• ${esc(tx(a.t))}：${esc(tx(a.why))}`);
+});
+fb = ck.ok ? `<div class="fb ok">${L('正確！各儀器用途：','Correct! Uses:')}<br>${APPARATUS.filter(a=>a.need).map(a=>`• ${esc(tx(a.t))}：${esc(tx(a.why))}`).join('<br>')}${lines.length?'<br>'+lines.join('<br>'):''}</div>`
+: `<div class="fb hint">${lines.join('<br>')}</div>`;
+}
+return `<h2>${L('選擇儀器','Choose apparatus')}</h2>
+<p class="small muted">${L('揀出完成實驗需要的儀器（可多選）。','Select all apparatus needed.')}</p>
+<div class="opts" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">${items}</div>
+<div class="row" style="margin-top:10px"><button class="btn" onclick="checkApp()">${L('檢查','Check')}</button></div>
+<div aria-live="polite">${fb}</div>`;
+}
+function checkApp(){
+const ok = APPARATUS.every(a => a.need === null || (!!S.s2.app[a.id]) === a.need);
+S.s2.appChecked = { ok }; $('appPanel').innerHTML = appHTML(); renderProgress();
+}
+function groupHTML(){
+const ck = S.s2.groupChecked;
+const rows = TUBES.map(t => {
+const v = S.s2.group[t] || '';
+const mark = ck ? (v === GROUP_ANS[t] ? '✓' : '✗') : '';
+return `<tr><th>${t}${t.startsWith('E')?' / '+t+'′':''}</th>
+<td class="l"><select aria-label="${t} ${L('內容','contents')}" onchange="S.s2.group['${t}']=this.value;S.s2.groupChecked=null;renderProgress()">
+<option value="">${L('— 請選擇 —','— choose —')}</option>
+${CONTENTS.map(c => `<option value="${c.id}" ${v===c.id?'selected':''}>${esc(tx(c.t))}</option>`).join('')}</select>
+${ck && v === GROUP_ANS[t] ? `<div class="small muted">${esc(tx(ROLE[t]))}</div>` : ''}</td>
+<td style="width:2.5em;font-weight:700;color:${mark==='✓'?'var(--cuke)':'var(--tomato)'}">${mark}</td>
+<td class="l"><select aria-label="${t} ${L('預測','prediction')}" onchange="S.s2.pred['${t}']=this.value;renderProgress()">
+<option value="">${L('— 預測 —','— predict —')}</option>
+${PRED_CATS.map(c => `<option value="${c.id}" ${S.s2.pred[t]===c.id?'selected':''}>${esc(tx(c.t))}</option>`).join('')}</select></td></tr>`;
+}).join('');
+let fb = '';
+if (ck) fb = ck.ok ? `<div class="fb ok">${L('分組正確！每支管嘅角色已顯示喺下面。記住：E1′–E3′ 係裝住 1 cm³ DCPIP 嘅滴定管。','All correct! Each tube’s role is shown. E1′–E3′ hold 1 cm³ DCPIP for titration.')}</div>`
+: `<div class="fb hint">${L('有 ✗ 嘅試管再諗吓。提示：A–D 係測試「樣本本身」，所以直接滴入 DCPIP；E 組先培育再滴定，而 E1、E2、E3 只係改變自變量。','Rethink the ✗ tubes. Hint: A–D test each sample directly; E tubes are incubated first, changing only the independent variable.')}</div>`;
+return `<h2>${L('分組與預測','Groups and predictions')}</h2>
+<p class="small muted">${L('為每支試管揀內容，並預測令 1 cm³ 0.01% DCPIP 褪色所需的滴數（每滴 50 µL）。之後會同模擬結果比較。',
+'Choose the contents for each tube and predict the drops (50 µL each) to decolourise 1 cm³ 0.01% DCPIP. You will compare with the simulation later.')}</p>
+<div class="tbl-wrap"><table><thead><tr><th>${L('試管','Tube')}</th><th class="l">${L('內容','Contents')}</th><th></th><th class="l">${L('預測','Prediction')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+<div class="row" style="margin-top:10px"><button class="btn" onclick="checkGroup()">${L('檢查分組','Check groups')}</button></div>
+<div aria-live="polite">${fb}</div>`;
+}
+function checkGroup(){ S.s2.groupChecked = { ok: TUBES.every(t => S.s2.group[t] === GROUP_ANS[t]) }; $('groupPanel').innerHTML = groupHTML(); renderProgress(); }
+
+/* ---- 校準每滴體積 ---- */
+function calibHTML(){
+const c = S.s2.calib;
+if (c.trueUL === null) c.trueUL = CONFIG.CALIB_TRUE_RANGE[0] + Math.random() * (CONFIG.CALIB_TRUE_RANGE[1] - CONFIG.CALIB_TRUE_RANGE[0]);
+const vol = c.drops * c.trueUL / 1000; // cm³
+const full = c.drops >= CONFIG.CALIB_DROPS;
+const avg = c.trials.length ? c.trials.reduce((s, t) => s + t.perDrop, 0) / c.trials.length : null;
+return `<h2>${L('校準：每滴體積是多少？','Calibrate: how big is one drop?')}</h2>
+<p class="small muted">${L(`把蒸餾水逐滴滴入 5 cm³ 量筒，數 ${CONFIG.CALIB_DROPS} 滴，讀凹液面最低點，然後計算每滴體積 (µL)。重複 2–3 次取平均。`,
+`Drop distilled water into a 5 cm³ cylinder, count ${CONFIG.CALIB_DROPS} drops, read the bottom of the meniscus, then calculate the volume per drop (µL). Repeat 2–3 times.`)}</p>
+<div class="grid2">
+<div class="bench">${cylinderSVG(vol, full)}</div>
+<div>
+<div class="readout" style="grid-template-columns:1fr 1fr"><div><span>${L('已滴','Drops')}</span><b>${c.drops}</b></div><div><span>${L('第幾次','Trial')}</span><b>${Math.min(c.trials.length+1,3)} / 3</b></div></div>
+<div class="row">
+<button class="btn" onclick="calibDrop(1)" ${full||c.trials.length>=3?'disabled':''}>${L('滴 1 滴','Add 1 drop')}</button>
+<button class="btn sec" onclick="calibDrop(CONFIG.CALIB_DROPS)" ${full||c.trials.length>=3?'disabled':''}>${L(`連續滴到 ${CONFIG.CALIB_DROPS} 滴`,`Drop to ${CONFIG.CALIB_DROPS}`)}</button>
+</div>
+${full && c.trials.length < 3 ? `
+<div class="ctrl" style="margin-top:12px"><label for="cRead">${L('① 量筒讀數 (cm³)','① Cylinder reading (cm³)')}</label>
+<input type="number" id="cRead" step="0.05" min="0" max="5" value="${esc(c.reading)}" oninput="S.s2.calib.reading=this.value"></div>
+<div class="ctrl"><label for="cPer">${L('② 每滴體積 (µL) = 讀數 ÷ 滴數 × 1000','② Volume per drop (µL) = reading ÷ drops × 1000')}</label>
+<input type="number" id="cPer" step="0.1" min="0" value="${esc(c.perDrop)}" oninput="S.s2.calib.perDrop=this.value"></div>
+<button class="btn green" onclick="calibCheck()">${L('檢查並記錄','Check and record')}</button>` : ''}
+<div aria-live="polite">${c.msg ? `<div class="fb ${c.msg.ok?'ok':'hint'}">${esc(tx(c.msg))}</div>` : ''}</div>
+<p class="small muted teacher-only">${L('老師模式：今次滴管真實每滴','Teacher: true drop volume this trial')} = ${fmt(c.trueUL,1)} µL；${L('真實讀數','true reading')} ≈ ${fmt(vol,2)} cm³</p>
+</div>
+</div>
+${c.trials.length ? `<div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th>${L('次數','Trial')}</th><th>${L('滴數','Drops')}</th><th>${L('讀數 (cm³)','Reading (cm³)')}</th><th>${L('每滴 (µL)','Per drop (µL)')}</th></tr></thead>
+<tbody>${c.trials.map((t,i)=>`<tr><td>${i+1}</td><td>${t.drops}</td><td>${fmt(t.reading,2)}</td><td>${fmt(t.perDrop,1)}</td></tr>`).join('')}
+<tr><th colspan="3">${L('平均','Mean')}</th><th>${fmt(avg,1)} µL</th></tr></tbody></table></div>
+<p class="small">${L(`每滴唔一定係 50 µL：呢個誤差會影響「滴數 → 體積」嘅換算，可以寫入評鑑嘅準確度部分。`,`A drop is not always 50 µL — this affects converting drops to volume; mention it under accuracy.`)}</p>` : ''}`;
+}
+/** 5 cm³ 量筒 + 放大刻度（0.1 cm³ 一格） */
+function cylinderSVG(vol, showZoom){
+const top = 30, bottom = 290, scale = (bottom - top) / 5; // px per cm³
+const y = bottom - vol * scale;
+let ticks = '';
+for (let i = 0; i <= 50; i++){
+const yy = bottom - i * 0.1 * scale, major = i % 10 === 0, mid = i % 5 === 0;
+ticks += `<line x1="70" x2="${major?92:mid?86:80}" y1="${yy}" y2="${yy}" stroke="currentColor" stroke-width="${major?1.4:.8}"/>`;
+if (major) ticks += `<text x="100" y="${yy+5}" font-size="13" fill="currentColor">${i/10}</text>`;
+}
+// 放大視窗：顯示讀數附近 ±0.3 cm³
+let zoom = '';
+if (showZoom){
+const zs = 150; // px per cm³ in zoom
+const cx = 200, cy = 160;
+let zt = '';
+const base = Math.round(vol * 10) / 10;
+for (let k = -4; k <= 4; k++){
+const v = base + k * 0.1; if (v < 0) continue;
+const yy = cy - (v - vol) * zs;
+const lab = Math.round(v*10) % 5 === 0;
+zt += `<line x1="${cx}" x2="${cx + (lab?40:26)}" y1="${yy}" y2="${yy}" stroke="currentColor" stroke-width="${lab?1.6:1}"/>`;
+if (lab) zt += `<text x="${cx+46}" y="${yy+5}" font-size="13" fill="currentColor">${fmt(v,1)}</text>`;
+}
+zoom = `<g><clipPath id="zc"><rect x="180" y="80" width="130" height="160" rx="10"/></clipPath>
+<rect x="180" y="80" width="130" height="160" rx="10" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/>
+<g clip-path="url(#zc)"><rect x="180" y="${cy}" width="130" height="200" fill="#bcd9f2" opacity=".7"/>
+<path d="M180 ${cy-7} Q245 ${cy+8} 310 ${cy-7}" fill="none" stroke="#3d6f9c" stroke-width="2"/>${zt}</g>
+<text x="245" y="72" text-anchor="middle" font-size="13" fill="currentColor">${L('放大刻度（每格 0.1 cm³）','Zoomed scale (0.1 cm³)')}</text></g>`;
+}
+return `<svg viewBox="0 0 330 310" role="img" aria-label="${L('5 cm³ 量筒，液體體積','5 cm³ cylinder, volume')} ${showZoom?'':fmt(vol,2)}" style="color:var(--ink)">
+<rect x="40" y="${top-10}" width="30" height="${bottom-top+12}" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+${vol>0?`<rect x="42" y="${y}" width="26" height="${bottom-y+1}" fill="#bcd9f2"/><path d="M42 ${y-3} Q55 ${y+3} 68 ${y-3}" fill="none" stroke="#3d6f9c" stroke-width="1.5"/>`:''}
+<rect x="28" y="${bottom+2}" width="54" height="8" rx="2" fill="currentColor" opacity=".6"/>
+${ticks}${zoom}</svg>`;
+}
+function calibDrop(n){
+const c = S.s2.calib; c.msg = null;
+c.drops = Math.min(CONFIG.CALIB_DROPS, c.drops + n);
+$('calibPanel').innerHTML = calibHTML();
+}
+function calibCheck(){
+const c = S.s2.calib; const trueVol = c.drops * c.trueUL / 1000;
+const r = parseFloat(c.reading), p = parseFloat(c.perDrop);
+if (isNaN(r) || isNaN(p)){ c.msg = {ok:false, zh:'請先輸入讀數同每滴體積。', en:'Enter both the reading and the volume per drop.'}; }
+else if (Math.abs(r - trueVol) > 0.06){ c.msg = {ok:false, zh:'讀數唔太啱。提示：眼睛同液面平視，讀凹液面最低點；用放大刻度數格（每格 0.1 cm³）。', en:'Reading is off. Hint: eye level with the liquid, read the bottom of the meniscus; count 0.1 cm³ marks in the zoom.'}; }
+else if (Math.abs(p - r / c.drops * 1000) > 1){ c.msg = {ok:false, zh:`計算再檢查：每滴 = ${fmt(r,2)} ÷ ${c.drops} × 1000 µL。`, en:`Check the maths: per drop = ${fmt(r,2)} ÷ ${c.drops} × 1000 µL.`}; }
+else {
+c.trials.push({ drops: c.drops, reading: r, perDrop: p });
+c.msg = {ok:true, zh:`已記錄第 ${c.trials.length} 次。${c.trials.length<3?'量筒已倒空，可以再做一次。':'三次完成！'}`, en:`Trial ${c.trials.length} recorded. ${c.trials.length<3?'Cylinder emptied; repeat.':'All three done!'}`};
+c.drops = 0; c.reading = ''; c.perDrop = '';
+c.trueUL = CONFIG.CALIB_TRUE_RANGE[0] + Math.random() * (CONFIG.CALIB_TRUE_RANGE[1] - CONFIG.CALIB_TRUE_RANGE[0]);
+}
+$('calibPanel').innerHTML = calibHTML(); renderProgress();
+}
+
+/* ==========================================================================
+⑩ 階段 3：虛擬實驗室
+========================================================================== */
+const JUICE_NAME = { fresh:{zh:'新鮮青瓜汁',en:'fresh cucumber juice'}, boiled:{zh:'煮過的青瓜汁',en:'boiled cucumber juice'}, water:{zh:'蒸餾水',en:'distilled water'} };
+const E_LABEL = { fresh:'E1', boiled:'E2', water:'E3' };
+function tubeName(p){ return p.tube === 'E' ? E_LABEL[p.juice] : p.tube; }
+/** 結果分組 key：只包含會影響該試管結果的參數 */
+function paramKey(p){
+const t = tubeName(p);
+if (p.tube === 'A' || p.tube === 'B' || p.tube === 'D') return `${t}|d${p.dcpipVol}`;
+if (p.tube === 'C') return `${t}|vc${p.vitC}|d${p.dcpipVol}`;
+return `${t}|vc${p.vitC}|jv${p.juiceVol}|t${p.time}|T${p.temp}|d${p.dcpipVol}`;
+}
+function stdKey(t){
+const p = { tube: t.startsWith('E') ? 'E' : t, juice: {E1:'fresh',E2:'boiled',E3:'water'}[t] || 'fresh',
+vitC: CONFIG.VITC_DEFAULT, juiceVol: CONFIG.STD_JUICE_VOL, time: CONFIG.STD_TIME, temp: CONFIG.ROOM_T, dcpipVol: CONFIG.STD_DCPIP_VOL };
+return paramKey(p);
+}
+function isStd(p){ return paramKey(p) === stdKey(tubeName(p)); }
+function paramDesc(p){
+const parts = [];
+if (p.tube === 'C' || p.tube === 'E') parts.push(`${L('維C','VitC')} ${p.vitC}%`);
+if (p.tube === 'E') parts.push(`${p.juiceVol} cm³`, `${p.time} min`, `${p.temp} °C`);
+parts.push(`DCPIP ${p.dcpipVol} cm³`);
+return parts.join(', ');
+}
+const maxDropsFor = p => p.tube === 'E' ? Math.min(CONFIG.MAX_DROPS, Math.floor((CONFIG.VITC_VOL + p.juiceVol) * 1000 / CONFIG.DROP_UL)) : CONFIG.MAX_DROPS;
+
+function renderS3(){
+const lb = S.lab, busy = lb.phase !== 'setup' && lb.phase !== 'done';
+const isE = lb.tube === 'E';
+const dis = busy ? 'disabled' : '';
+const slider = (id, label, min, max, step, unit, show = true) => show ? `<div class="ctrl"><label for="${id}">${label}<span class="val" id="${id}V">${lb[id]} ${unit}</span></label>
+<input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${lb[id]}" ${dis}
+oninput="S.lab.${id}=parseFloat(this.value);$('${id}V').textContent=this.value+' ${unit}';labChanged()"></div>` : '';
+$('app').innerHTML = `
+<section class="panel">
+<h2>${L('虛擬實驗室','Virtual lab')}</h2>
+<p class="small muted">${L('揀試管同參數 → 開始實驗 → （E 組）培育 → 逐滴加入 DCPIP 管直至褪色。每組條件做 3 次重複，結果會自動記錄。鍵盤：Tab 去按鈕，Enter／空白鍵操作。',
+'Choose a tube and parameters → start → (E tubes) incubate → add drops to DCPIP until colourless. Do 3 repeats per condition; results are recorded automatically. Keyboard: Tab to buttons, Enter/Space to press.')}</p>
+<div class="lab">
+<div>
+<div class="ctrl"><label for="tubeSel">${L('試管','Tube')}</label>
+<select id="tubeSel" ${dis} onchange="S.lab.tube=this.value;labChanged(true)">
+${['A','B','C','D'].map(t=>`<option value="${t}" ${lb.tube===t?'selected':''}>${t}：DCPIP ＋ ${esc(tx({A:JUICE_NAME.fresh,B:JUICE_NAME.boiled,C:{zh:'維生素 C 溶液',en:'vitamin C solution'},D:JUICE_NAME.water}[t]))}</option>`).join('')}
+<option value="E" ${isE?'selected':''}>${L('E 組：維生素 C ＋ 液體，培育後滴定','E set: vitamin C + liquid, incubate then titrate')}</option></select></div>
+${isE?`<div class="ctrl"><label for="juiceSel">${L('加入的液體（自變量）','Liquid added (independent variable)')}</label>
+<select id="juiceSel" ${dis} onchange="S.lab.juice=this.value;labChanged()">
+${['fresh','boiled','water'].map(j=>`<option value="${j}" ${lb.juice===j?'selected':''}>${E_LABEL[j]}：${esc(tx(JUICE_NAME[j]))}</option>`).join('')}</select></div>`:''}
+${(isE||lb.tube==='C')?`<div class="ctrl"><label for="vcSel">${L('維生素 C 溶液濃度','Vitamin C concentration')}</label>
+<select id="vcSel" ${dis} onchange="S.lab.vitC=parseFloat(this.value);labChanged()">
+${CONFIG.VITC_OPTIONS.map(v=>`<option value="${v}" ${lb.vitC===v?'selected':''}>${v}%</option>`).join('')}</select>
+<div class="small muted">${L('提示：用邊個濃度，先令滴數落喺 40 滴以內嘅可量度範圍？','Hint: which concentration keeps the drop count within the measurable 40-drop range?')}</div></div>`:''}
+${slider('juiceVol', L('青瓜汁／液體體積','Liquid volume'), 0.5, 2, 0.5, 'cm³', isE)}
+${slider('time', L('培育時間','Incubation time'), 0, 20, 1, 'min', isE)}
+${slider('temp', L('培育溫度','Incubation temperature'), 10, 60, 1, '°C', isE)}
+${slider('dcpipVol', L('DCPIP (0.01%) 體積','DCPIP (0.01%) volume'), 0.5, 2, 0.5, 'cm³')}
+${slider('reps', L('重複次數','Number of repeats'), 1, 5, 1, '')}
+<div class="teacher-only panel" style="padding:10px;margin:0;background:var(--amber-soft)" id="teacherBox"></div>
+</div>
+<div>
+<div class="bench" id="bench"></div>
+<div class="readout" id="readout"></div>
+<div id="labActions" class="no-print"></div>
+<div aria-live="polite" id="labMsg"></div>
+</div>
+</div>
+</section>
+<section class="panel"><h2>${L('結果表','Results table')}</h2><div id="resTable"></div></section>
+${navBottom()}`;
+updateBench(); renderReadout(); renderLabActions(); renderTeacherBox(); renderResTable(); renderLabMsg();
+}
+function labChanged(full){
+  const lb = S.lab;
+  // 完成一次實驗後，只要改了試管或任何參數，就回到「準備」狀態，不再沿用上一次的 trial
+  if (lb.phase === 'done'){
+    clearInterval(incTimer); stopFast();
+    lb.trial = null; lb.drops = 0; lb.incElapsed = 0; lb.incRunning = false;
+    lb.phase = 'setup';
+  }
+  lb.msg = null;
+  if (full) renderS3();
+  else { updateBench(); renderLabActions(); renderTeacherBox(); renderReadout(); renderLabMsg(); }
+}
+function currentParams(){ const l = S.lab; return { tube:l.tube, juice:l.juice, vitC:l.vitC, juiceVol:l.juiceVol, time:l.time, temp:l.temp, dcpipVol:l.dcpipVol }; }
+
+/* 實驗台 SVG */
+function updateBench(){
+const lb = S.lab, p = lb.trial ? lb.trial.p : currentParams(), isE = p.tube === 'E';
+const blue = [43, 86, 181];
+const endCol = (p.tube === 'A' || (isE && p.juice === 'fresh')) ? [214, 232, 196] : (p.tube === 'B' || (isE && p.juice === 'boiled')) ? [224, 232, 206] : [236, 243, 248];
+const added = lb.drops * CONFIG.DROP_UL / 1000;
+const total = p.dcpipVol + added;
+let r = 1; // 剩餘 DCPIP 比例
+if (lb.trial && isFinite(lb.trial.required)) r = Math.max(0, 1 - lb.drops / lb.trial.required);
+if (lb.trial && lb.trial.endpoint !== null && lb.drops >= lb.trial.endpoint) r = 0;
+const showLiquid = lb.phase !== 'setup' || true;
+const intensity = Math.pow(r * p.dcpipVol / total, 0.6);
+const col = mixColor(endCol, blue, intensity);
+const h = Math.min(118, total * 38);
+const incCol = isE ? (p.juice === 'water' ? '#e8f2f8' : p.juice === 'fresh' ? '#c9e2b3' : '#d6e2bf') : 'none';
+const incSec = lb.incElapsed, incTot = p.time * 60;
+const mm = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+const tName = lb.trial ? tubeName(p) + (isE ? '′' : '') : tubeName(p) + (isE ? '′' : '');
+const titrant = isE ? `${E_LABEL[p.juice]} ${L('混合物','mixture')}` : tx({A:JUICE_NAME.fresh,B:JUICE_NAME.boiled,C:{zh:'維生素 C',en:'vitamin C'},D:JUICE_NAME.water}[p.tube]);
+$('bench').innerHTML = `<svg viewBox="0 0 400 330" role="img" aria-label="${L('實驗台：DCPIP 試管顏色','Bench: DCPIP tube colour')} ${Math.round((1-r)*100)}% ${L('已褪色','decolourised')}" style="color:var(--ink)">
+<defs><clipPath id="tubeClip"><path d="M186 150 V262 A14 14 0 0 0 214 262 V150 Z"/></clipPath>
+<clipPath id="incClip"><path d="M56 190 V272 A12 12 0 0 0 80 272 V190 Z"/></clipPath></defs>
+<!-- 白瓷磚 -->
+<rect x="150" y="292" width="100" height="18" rx="2" fill="#fff" stroke="var(--line)"/>
+<!-- 試管架 -->
+<rect x="20" y="230" width="360" height="10" rx="3" fill="currentColor" opacity=".25"/>
+<rect x="20" y="300" width="120" height="8" rx="3" fill="currentColor" opacity=".25"/>
+<rect x="260" y="300" width="120" height="8" rx="3" fill="currentColor" opacity=".25"/>
+<rect x="24" y="230" width="8" height="78" fill="currentColor" opacity=".25"/><rect x="368" y="230" width="8" height="78" fill="currentColor" opacity=".25"/>
+<!-- DCPIP 管 -->
+<rect x="186" y="${276 - h}" width="28" height="${h + 4}" fill="${col}" clip-path="url(#tubeClip)"/>
+<path d="M184 140 V262 A16 16 0 0 0 216 262 V140" fill="none" stroke="currentColor" stroke-width="2.2"/>
+<text x="200" y="130" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${tName}</text>
+<!-- 滴管 -->
+<g opacity="${lb.phase==='titrating'||lb.phase==='limit'?1:.35}">
+<ellipse cx="200" cy="22" rx="12" ry="15" fill="var(--tomato)" opacity=".85"/>
+<path d="M195 34 V92 L199 108 H201 L205 92 V34 Z" fill="${isE ? incCol : (p.tube==='A'?'#c9e2b3':p.tube==='B'?'#d6e2bf':'#e8f2f8')}" stroke="currentColor" stroke-width="1.5"/>
+</g>
+<circle id="dropDot" cx="200" cy="112" r="4.5" fill="${isE ? incCol : '#cfe3f3'}" stroke="currentColor" stroke-width=".8" opacity="0"/>
+<text x="235" y="70" font-size="13" fill="currentColor">${esc(titrant)}</text>
+<!-- 培育管 -->
+${isE ? `<g><rect x="56" y="${270 - Math.min(80,(CONFIG.VITC_VOL+p.juiceVol)*26)}" width="24" height="90" fill="${incCol}" clip-path="url(#incClip)"/>
+<path d="M54 180 V272 A14 14 0 0 0 82 272 V180" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="68" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor">${E_LABEL[p.juice]}</text>
+${p.temp !== CONFIG.ROOM_T ? `<rect x="40" y="215" width="56" height="70" rx="6" fill="#7fb3e0" opacity=".25"/><text x="68" y="300" text-anchor="middle" font-size="12" fill="currentColor">${L('水浴','bath')} ${p.temp} °C</text>` : `<text x="68" y="300" text-anchor="middle" font-size="12" fill="currentColor">${L('室溫','room')} ${p.temp} °C</text>`}
+<circle cx="68" cy="70" r="30" fill="var(--surface)" stroke="currentColor" stroke-width="2"/>
+<path d="M68 70 L68 ${70-24}" stroke="currentColor" stroke-width="2"/>
+<path d="M68 70 L${68 + 24*Math.sin(2*Math.PI*(incTot?incSec/incTot:0))} ${70 - 24*Math.cos(2*Math.PI*(incTot?incSec/incTot:0))}" stroke="var(--tomato)" stroke-width="3" stroke-linecap="round"/>
+<text x="68" y="125" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor" style="font-variant-numeric:tabular-nums">${mm(Math.min(incSec,incTot))} / ${mm(incTot)}</text></g>` : ''}
+<!-- 量筒（裝飾） -->
+<g opacity=".7"><rect x="322" y="150" width="22" height="78" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<rect x="324" y="${200}" width="18" height="27" fill="#bcd9f2"/><rect x="314" y="226" width="38" height="5" fill="currentColor" opacity=".5"/>
+${[0,1,2,3,4].map(i=>`<line x1="322" x2="330" y1="${222-i*14}" y2="${222-i*14}" stroke="currentColor"/>`).join('')}
+<text x="333" y="144" text-anchor="middle" font-size="11" fill="currentColor">5 cm³</text></g>
+</svg>`;
+}
+function animateDrop(done){
+const d = $('dropDot');
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!d || reduce){ done(); return; }
+const p = S.lab.trial.p, total = p.dcpipVol + S.lab.drops * CONFIG.DROP_UL / 1000;
+const targetY = 276 - Math.min(118, total * 38);
+const t0 = performance.now(), dur = S.lab.fast ? 120 : 260;
+d.setAttribute('opacity', '1');
+(function step(t){
+const k = Math.min(1, (t - t0) / dur);
+d.setAttribute('cy', 112 + (targetY - 112) * k * k);
+if (k < 1) requestAnimationFrame(step); else { d.setAttribute('opacity','0'); d.setAttribute('cy','112'); done(); }
+})(t0);
+}
+function renderReadout(){
+const lb = S.lab;
+const p = lb.trial ? lb.trial.p : currentParams();
+const key = paramKey(p), done = S.results[key]?.trials.length || 0;
+$('readout').innerHTML = `<div><span>${L('已加滴數','Drops added')}</span><b>${lb.drops}</b></div>
+<div><span>${L('已加體積','Volume added')}</span><b>${lb.drops * CONFIG.DROP_UL} µL</b></div>
+<div><span>${L('重複','Repeats')} (${tubeName(p)})</span><b>${done} / ${lb.reps}</b></div>`;
+}
+function renderLabActions(){
+const lb = S.lab, el = $('labActions'); if (!el) return;
+const p = lb.trial ? lb.trial.p : currentParams();
+const full = (S.results[paramKey(p)]?.trials.length || 0) >= lb.reps;
+let h = '';
+if (lb.phase === 'setup' || lb.phase === 'done'){
+h = `<div class="row"><button class="btn" id="startBtn" onclick="startTrial()" ${full?'disabled':''}>${lb.phase==='done'?L('下一次重複','Next repeat'):L('開始實驗','Start trial')}</button>
+${full?`<span class="small muted">${L('呢組條件已完成所需重複次數。改變參數或試管做新一組。','Repeats complete for these conditions. Change tube or parameters for a new set.')}</span>`:''}</div>`;
+} else if (lb.phase === 'incubating'){
+h = `<div class="row"><button class="btn" id="incBtn" onclick="toggleInc()">${lb.incRunning?L('暫停計時','Pause'):L('開始培育計時','Start incubation')}</button>
+<label class="small" for="spd">${L('加速','Speed')}</label>
+<select id="spd" onchange="S.lab.speed=parseInt(this.value)">${[1,10,30,60].map(s=>`<option value="${s}" ${lb.speed===s?'selected':''}>${s}×</option>`).join('')}</select>
+<button class="btn sec" onclick="finishInc()">${L('跳到培育完成','Skip to end')}</button></div>`;
+} else if (lb.phase === 'titrating'){
+h = `<div class="row"><button class="btn" id="dropBtn" onclick="addDrop()">${L('逐滴：加 1 滴 (+50 µL)','Add 1 drop (+50 µL)')}</button>
+<button class="btn sec" id="fastBtn" onclick="toggleFast()" aria-pressed="${lb.fast}">${lb.fast?L('停止快進','Stop fast mode'):L('快進加滴','Fast add')}</button></div>`;
+} else if (lb.phase === 'limit'){
+h = `<div class="row"><button class="btn warn" id="stopBtn" onclick="stopAtLimit()">${L(`停止並記錄「> ${lb.trial.max} 滴」`,`Stop and record “> ${lb.trial.max} drops”`)}</button></div>`;
+}
+h += `<div class="row teacher-only" style="margin-top:8px"><button class="btn sec" onclick="autoStandard()">${L('老師：一鍵完成標準實驗 (A–E3 × 3)','Teacher: auto-run standard set (A–E3 × 3)')}</button></div>`;
+el.innerHTML = h;
+}
+function renderLabMsg(){ const m = S.lab.msg; $('labMsg').innerHTML = m ? `<div class="fb ${m.cls}">${esc(tx(m))}</div>` : ''; }
+function renderTeacherBox(){
+const el = $('teacherBox'); if (!el) return;
+const p = S.lab.trial ? S.lab.trial.p : currentParams(), r = computeTrial(p);
+const tr = S.lab.trial;
+el.innerHTML = `<b>${L('老師模式：隱藏數值','Teacher mode: hidden values')}</b>
+<div class="small">${L('酶活性 (0–1)','Enzyme activity (0–1)')}：${fmt(r.activity,2)}<br>
+k_eff：${fmt(r.kEff,4)} /min<br>
+${L('起始維生素 C','Initial vitamin C')}：${r.initial.toFixed(5)} %<br>
+${L('滴定時真實維生素 C','True vitamin C at titration')}：${r.remaining.toFixed(5)} %<br>
+${L('理論所需滴數','Theoretical drops')}：${isFinite(r.theory)?fmt(r.theory,1):'∞'}${tr&&tr.endpoint!==null?`；${L('今次終點（含誤差）','this trial’s end-point (with noise)')}：${tr.endpoint}`:''}</div>
+<div class="ctrl" style="margin-top:6px"><label for="kSl">K_ENZ<span class="val" id="kSlV">${fmt(kEnz(),2)}</span></label>
+<input type="range" id="kSl" min="0" max="0.5" step="0.01" value="${kEnz()}" oninput="S.lab.kOverride=parseFloat(this.value);$('kSlV').textContent=(+this.value).toFixed(2);renderTeacherBox()"></div>`;
+}
+
+/* 實驗流程 */
+function startTrial(){
+const p = currentParams(), r = computeTrial(p);
+const required = isFinite(r.theory) ? Math.max(0.6, r.theory + randNoise()) : Infinity;
+const max = maxDropsFor(p);
+const endpoint = required <= max ? Math.max(1, Math.round(required)) : null;
+S.lab.trial = { p, r, required, endpoint, max };
+S.lab.drops = 0; S.lab.incElapsed = 0; S.lab.incRunning = false; S.lab.msg = null;
+S.lab.phase = p.tube === 'E' && p.time > 0 ? 'incubating' : 'titrating';
+if (p.tube === 'E' && p.time === 0) S.lab.msg = {cls:'hint', zh:'培育時間 = 0：混合後立即滴定。', en:'Incubation time = 0: titrate immediately after mixing.'};
+renderS3();
+(S.lab.phase === 'incubating' ? $('incBtn') : $('dropBtn'))?.focus();
+}
+function toggleInc(){
+const lb = S.lab; lb.incRunning = !lb.incRunning;
+clearInterval(incTimer);
+if (lb.incRunning){
+incTimer = setInterval(() => {
+lb.incElapsed += 0.1 * lb.speed;
+if (lb.incElapsed >= lb.trial.p.time * 60){ finishInc(); return; }
+if ($('bench')) updateBench();
+}, 100);
+}
+renderLabActions(); $('incBtn')?.focus();
+}
+function finishInc(){
+clearInterval(incTimer); const lb = S.lab;
+lb.incRunning = false; lb.incElapsed = lb.trial.p.time * 60; lb.phase = 'titrating';
+lb.msg = {cls:'hint', zh:'培育完成！立即把混合物逐滴加入 DCPIP 管。', en:'Incubation done! Add the mixture to the DCPIP tube immediately.'};
+if ($('bench')){ updateBench(); renderLabActions(); renderLabMsg(); $('dropBtn')?.focus(); }
+}
+function addDrop(){
+const lb = S.lab; if (lb.phase !== 'titrating' || dropAnimating) return;
+dropAnimating = true;
+animateDrop(() => {
+dropAnimating = false;
+lb.drops++;
+const tr = lb.trial;
+if (tr.endpoint !== null && lb.drops >= tr.endpoint){
+stopFast(); recordTrial(lb.drops, false);
+lb.msg = {cls:'ok', zh:`DCPIP 已褪色！共 ${lb.drops} 滴（${lb.drops*CONFIG.DROP_UL} µL），已記錄。`, en:`DCPIP decolourised after ${lb.drops} drops (${lb.drops*CONFIG.DROP_UL} µL). Recorded.`};
+lb.phase = 'done';
+} else if (lb.drops >= tr.max){
+stopFast(); lb.phase = 'limit';
+lb.msg = {cls:'bad', zh: tr.max < CONFIG.MAX_DROPS ? `混合物已用完（${tr.max} 滴），DCPIP 仍未褪色，可以停止。` : `已加 ${tr.max} 滴（${tr.max*CONFIG.DROP_UL} µL）仍未褪色，可以停止。`,
+en: tr.max < CONFIG.MAX_DROPS ? `Mixture used up (${tr.max} drops) and DCPIP is still blue. You may stop.` : `${tr.max} drops (${tr.max*CONFIG.DROP_UL} µL) added and still blue. You may stop.`};
+}
+if ($('bench')){ updateBench(); renderReadout(); renderLabMsg(); renderTeacherBox();
+if (lb.phase !== 'titrating'){ renderLabActions(); renderResTable(); ($('startBtn')||$('stopBtn'))?.focus(); } }
+});
+}
+function toggleFast(){
+const lb = S.lab;
+if (lb.fast){ stopFast(); }
+else { lb.fast = true; fastTimer = setInterval(() => { if (S.lab.phase !== 'titrating'){ stopFast(); return; } addDrop(); }, 170); }
+renderLabActions(); $('fastBtn')?.focus();
+}
+function stopFast(){ clearInterval(fastTimer); S.lab.fast = false; }
+function stopAtLimit(){
+const lb = S.lab; recordTrial(lb.trial.max, true); lb.phase = 'done';
+lb.msg = {cls:'hint', zh:`已記錄為「> ${lb.trial.max} 滴」。`, en:`Recorded as “> ${lb.trial.max} drops”.`};
+renderS3(); $('startBtn')?.focus();
+}
+function recordTrial(v, over){
+const p = S.lab.trial.p, key = paramKey(p);
+if (!S.results[key]){
+S.results[key] = { key, short: tubeName(p) + (isStd(p) ? '' : '*'), p, trials: [] };
+S.resultOrder.push(key);
+}
+S.results[key].trials.push({ v, over });
+renderProgress();
+}
+function stats(row){
+const vals = row.trials.map(t => t.v), anyOver = row.trials.some(t => t.over);
+if (!vals.length) return null;
+const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+return { anyOver, mean, min: Math.min(...vals), max: Math.max(...vals) };
+}
+function renderResTable(){
+const el = $('resTable'); if (!el) return;
+if (!S.resultOrder.length){ el.innerHTML = `<p class="muted">${L('未有數據。開始第一個實驗後，結果會自動記錄喺度。','No data yet. Results appear here once you finish a trial.')}</p>`; return; }
+const n = Math.max(3, ...S.resultOrder.map(k => S.results[k].trials.length));
+el.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>${L('試管','Tube')}</th><th class="l">${L('條件','Conditions')}</th>
+${Array.from({length:n},(_,i)=>`<th>${L('第','Trial ')}${i+1}${L('次','')}</th>`).join('')}<th>${L('平均（滴）','Mean (drops)')}</th><th>${L('範圍','Range')}</th><th>${L('平均體積 (µL)','Mean vol (µL)')}</th><th class="no-print"></th></tr></thead>
+<tbody>${S.resultOrder.map(k => { const r = S.results[k], s = stats(r);
+return `<tr><th>${r.short}</th><td class="l small">${esc(paramDesc(r.p))}</td>
+${Array.from({length:n},(_,i)=>{ const t = r.trials[i]; return `<td>${t ? (t.over ? '&gt;'+t.v : t.v) : ''}</td>`; }).join('')}
+<td><b>${s.anyOver ? '&gt;'+fmt(s.max,0) : fmt(s.mean,1)}</b></td>
+<td>${s.anyOver ? '—' : `${s.min}–${s.max}`}</td>
+<td>${s.anyOver ? '&gt;'+(s.max*CONFIG.DROP_UL) : fmt(s.mean*CONFIG.DROP_UL,0)}</td>
+<td class="no-print"><button class="btn sec small" onclick="delRow('${k}')" aria-label="${L('刪除','Delete')} ${r.short}">${L('刪除','Delete')}</button></td></tr>`; }).join('')}</tbody></table></div>
+<p class="small muted">${L('* = 非標準條件（與 PDF 步驟不同）。「&gt;40」表示 40 滴仍未褪色，不能計算平均值。','* = non-standard conditions. “>40” means not decolourised by 40 drops; no mean can be calculated.')}</p>`;
+}
+function delRow(k){ delete S.results[k]; S.resultOrder = S.resultOrder.filter(x => x !== k); renderResTable(); renderReadout(); renderLabActions(); renderProgress(); }
+/** 老師：自動完成標準 A–E3 各 3 次 */
+function autoStandard(){
+const save = { ...S.lab };
+TUBES.forEach(t => {
+const p = { tube: t.startsWith('E') ? 'E' : t, juice: {E1:'fresh',E2:'boiled',E3:'water'}[t] || 'fresh', vitC: CONFIG.VITC_DEFAULT,
+juiceVol: CONFIG.STD_JUICE_VOL, time: CONFIG.STD_TIME, temp: CONFIG.ROOM_T, dcpipVol: CONFIG.STD_DCPIP_VOL };
+const key = paramKey(p);
+while ((S.results[key]?.trials.length || 0) < 3){
+const r = computeTrial(p), req = isFinite(r.theory) ? Math.max(0.6, r.theory + randNoise()) : Infinity, max = maxDropsFor(p);
+S.lab.trial = { p, r, required: req, endpoint: req <= max ? Math.max(1, Math.round(req)) : null, max };
+if (S.lab.trial.endpoint !== null) recordTrial(S.lab.trial.endpoint, false); else recordTrial(max, true);
+}
+});
+Object.assign(S.lab, { tube: save.tube, juice: save.juice, phase: 'setup', trial: null, drops: 0 });
+renderS3();
+}
+
+/* ==========================================================================
+⑪ 階段 4：作圖、分析、評鑑、報告
+========================================================================== */
+function chartSVG(){
+const rows = S.resultOrder.map(k => S.results[k]).filter(r => r.trials.length);
+if (!rows.length) return '';
+const W = 680, H = 360, m = { l: 58, r: 66, t: 20, b: 50 }, yMax = 45;
+const pw = W - m.l - m.r, ph = H - m.t - m.b, n = rows.length, slot = pw / n, bw = Math.min(56, slot * 0.6);
+const Y = v => m.t + ph - (v / yMax) * ph;
+let g = '';
+for (let v = 0; v <= 45; v += 5){
+g += `<line x1="${m.l}" x2="${m.l+pw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>
+<text x="${m.l-8}" y="${Y(v)+5}" text-anchor="end" font-size="13" fill="currentColor">${v}</text>
+<text x="${m.l+pw+8}" y="${Y(v)+5}" font-size="13" fill="currentColor">${v*CONFIG.DROP_UL}</text>`;
+}
+g += `<line x1="${m.l}" x2="${m.l+pw}" y1="${Y(40)}" y2="${Y(40)}" stroke="var(--tomato)" stroke-dasharray="6 4" stroke-width="1.5"/>
+<text x="${m.l+pw-4}" y="${Y(40)-6}" text-anchor="end" font-size="12" fill="var(--tomato)">${L('上限 40 滴','limit 40 drops')}</text>`;
+const colorOf = r => ({A:'#6E9F55',B:'#9CB37A',C:'#2B56B5',D:'#8DA2B8',E1:'#3F7A2E',E2:'#B08B3A',E3:'#5E7FC4'})[tubeName(r.p)] || '#777';
+rows.forEach((r, i) => {
+const s = stats(r), x = m.l + slot * i + (slot - bw) / 2, v = s.anyOver ? 40 : s.mean;
+g += `<rect x="${x}" y="${Y(v)}" width="${bw}" height="${Y(0)-Y(v)}" fill="${colorOf(r)}" ${s.anyOver?'fill-opacity=".35"':''}/>`;
+if (s.anyOver) g += `<rect x="${x}" y="${Y(v)}" width="${bw}" height="${Y(0)-Y(v)}" fill="url(#hatch)"/><text x="${x+bw/2}" y="${Y(v)-6}" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">&gt;40</text>`;
+else if (r.trials.length > 1){
+const cx = x + bw / 2;
+g += `<line x1="${cx}" x2="${cx}" y1="${Y(s.max)}" y2="${Y(s.min)}" stroke="currentColor" stroke-width="1.6"/>
+<line x1="${cx-7}" x2="${cx+7}" y1="${Y(s.max)}" y2="${Y(s.max)}" stroke="currentColor" stroke-width="1.6"/>
+<line x1="${cx-7}" x2="${cx+7}" y1="${Y(s.min)}" y2="${Y(s.min)}" stroke="currentColor" stroke-width="1.6"/>
+<text x="${cx}" y="${Y(s.max)-6}" text-anchor="middle" font-size="12" fill="currentColor">${fmt(s.mean,1)}</text>`;
+} else g += `<text x="${x+bw/2}" y="${Y(v)-6}" text-anchor="middle" font-size="12" fill="currentColor">${fmt(s.mean,1)}</text>`;
+g += `<text x="${x+bw/2}" y="${Y(0)+20}" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">${r.short}</text>`;
+});
+return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L('長條圖：各試管令 DCPIP 褪色的平均滴數','Bar chart: mean drops to decolourise DCPIP')}" style="color:var(--ink)">
+<defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs>
+${g}<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${Y(0)}" stroke="currentColor"/><line x1="${m.l}" x2="${m.l+pw}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor"/>
+<text transform="translate(16 ${m.t+ph/2}) rotate(-90)" text-anchor="middle" font-size="13" fill="currentColor">${L('平均滴數','Mean drops')}</text>
+<text transform="translate(${W-12} ${m.t+ph/2}) rotate(90)" text-anchor="middle" font-size="13" fill="currentColor">${L('平均體積 (µL)','Mean volume (µL)')}</text>
+<text x="${m.l+pw/2}" y="${H-6}" text-anchor="middle" font-size="13" fill="currentColor">${L('試管（誤差線 = 三次重複的範圍）','Tube (error bars = range of repeats)')}</text></svg>`;
+}
+function predCompareHTML(){
+const rows = TUBES.map(t => {
+const r = S.results[stdKey(t)], s = r ? stats(r) : null;
+const pred = PRED_CATS.find(c => c.id === S.s2.pred[t]);
+let actualCat = null;
+if (s) actualCat = s.anyOver ? PRED_CATS[3] : PRED_CATS.find(c => c.id !== 'over' && c.test(s.mean));
+const match = pred && actualCat ? (pred.id === actualCat.id ? '✓' : '✗') : '';
+return `<tr><th>${t}</th><td>${pred ? esc(tx(pred.t)) : '<span class="muted">—</span>'}</td>
+<td>${s ? (s.anyOver ? '&gt;40' : fmt(s.mean,1)) : `<span class="muted">${L('未做','not done')}</span>`}</td>
+<td style="font-weight:700;color:${match==='✓'?'var(--cuke)':'var(--tomato)'}">${match}</td></tr>`;
+}).join('');
+return `<div class="tbl-wrap"><table><thead><tr><th>${L('試管','Tube')}</th><th>${L('你的預測','Your prediction')}</th><th>${L('模擬平均（標準條件）','Simulated mean (standard)')}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="small muted">${L('預測錯咗唔緊要——重要係解釋點解結果同預測唔同。','A wrong prediction is fine — explain why the result differed.')}</p>`;
+}
+function renderS4(){
+const has = S.resultOrder.length > 0;
+const ta = (id, label, ph) => `<div class="ctrl"><label for="t-${id}">${label}</label>
+<textarea id="t-${id}" placeholder="${esc(ph)}" oninput="S.s4.text['${id}']=this.value;renderProgress()">${esc(S.s4.text[id])}</textarea></div>`;
+$('app').innerHTML = `
+<section class="panel">
+<h2>${L('結果圖表','Results chart')}</h2>
+${has ? `<div class="chart">${chartSVG()}</div>` : `<div class="fb hint">${L('未有數據。請先去「虛擬實驗室」完成實驗。','No data yet. Run experiments in the Virtual lab first.')} <button class="btn sec" onclick="goStage(3)">${L('去虛擬實驗室','Go to Virtual lab')}</button></div>`}
+</section>
+<section class="panel"><h2>${L('預測與結果比較','Predictions vs results')}</h2>${predCompareHTML()}</section>
+<section class="panel"><h2>${L('分析','Analysis')}</h2>
+${Q4.map(q => mcqHTML(q, S.s4.ans, 's4')).join('')}
+<div class="q">${ta('concl', L('用你自己的文字寫結論（引用數據）','Write your conclusion in your own words (quote data)'), L('例如：E1 平均需要 … 滴，比 E3 的 … 滴多，表示……','e.g. E1 needed a mean of … drops, more than E3’s …, showing…'))}
+${ta('e1e2', L('解釋 E1 與 E2 的差異','Explain the difference between E1 and E2'), L('提示：酶、變性、活性部位、脫氫抗壞血酸','Hint: enzyme, denatured, active site, dehydroascorbic acid'))}</div>
+</section>
+<section class="panel"><h2>${L('評鑑','Evaluation')}</h2>
+${Q4M.map(multiHTML).join('')}
+<div class="q">${ta('limits', L('寫出實驗的局限（可靠性、準確度）','State limitations (reliability, accuracy)'), L('例如：每滴體積不一定是 50 µL……','e.g. drop volume may not be exactly 50 µL…'))}
+${ta('improve', L('寫出改良方法，並解釋點樣改善結果','Suggest improvements and explain how they help'), L('例如：用滴定管 (burette)……','e.g. use a burette…'))}</div>
+</section>
+<section class="panel" id="report-panel">
+<h2>${L('學生報告摘要','Student report summary')}</h2>
+<div class="grid2 no-print">
+<div class="ctrl"><label for="sName">${L('姓名','Name')}</label><input type="text" id="sName" value="${esc(S.student.name)}" oninput="S.student.name=this.value"></div>
+<div class="ctrl"><label for="sCls">${L('班別（學號）','Class (No.)')}</label><input type="text" id="sCls" value="${esc(S.student.cls)}" oninput="S.student.cls=this.value"></div>
+</div>
+<div class="row no-print"><button class="btn" onclick="buildReport()">${L('生成報告','Generate report')}</button>
+<button class="btn sec" onclick="copyReport()">${L('複製文字','Copy text')}</button>
+<button class="btn sec" onclick="printReport()">${L('列印','Print')}</button>
+    <button class="btn green" onclick="submitReport()">${L('提交給老師','Submit to teacher')}</button><span id="copyMsg" class="small" aria-live="polite"></span></div>
+<div id="reportOut" style="margin-top:12px"></div>
+</section>
+${navBottom()}`;
+}
+/* 報告 */
+function reportData(){
+const pick = id => { const a = S.s1.ans[id]; return a === undefined ? L('（未作答）','(not answered)') : tx(Q1.find(q => q.id === id).opts[a].t); };
+const cvs = CV_CHIPS.filter(c => S.s1.bins[c.id] === 'cv').map(c => tx(c.t));
+const cal = S.s2.calib.trials; const calAvg = cal.length ? cal.reduce((s, t) => s + t.perDrop, 0) / cal.length : null;
+const rows = S.resultOrder.map(k => { const r = S.results[k], s = stats(r);
+return { tube: r.short, cond: paramDesc(r.p), trials: r.trials.map(t => (t.over ? '>' : '') + t.v), mean: s.anyOver ? '>' + s.max : fmt(s.mean,1), range: s.anyOver ? '—' : `${s.min}–${s.max}`, vol: s.anyOver ? '>' + s.max*CONFIG.DROP_UL : fmt(s.mean*CONFIG.DROP_UL,0) }; });
+return { pick, cvs, cal, calAvg, rows };
+}
+function buildReport(){
+const d = reportData(), T = S.s4.text;
+const none = `<span class="muted">${L('（未填寫）','(blank)')}</span>`;
+$('reportOut').innerHTML = `<div class="report">
+<h3 style="margin-top:0">${L('探究青瓜中的抗壞血酸氧化酶對維生素 C 的影響','Effect of cucumber ascorbate oxidase on vitamin C')}</h3>
+<p>${L('姓名','Name')}：${esc(S.student.name)||'＿＿＿＿'}　${L('班別','Class')}：${esc(S.student.cls)||'＿＿'}　${L('日期','Date')}：${new Date().toLocaleDateString(S.lang==='zh'?'zh-HK':'en-GB')}</p>
+<h3>${L('假設','Hypothesis')}</h3><p>${esc(d.pick('hyp'))}</p>
+<h3>${L('變數','Variables')}</h3>
+<p><b>${L('自變量','Independent')}</b>：${esc(d.pick('iv'))}<br><b>${L('應變量','Dependent')}</b>：${esc(d.pick('dv'))}<br>
+<b>${L('受控變數','Controlled')}</b>：${d.cvs.length ? esc(d.cvs.join('；')) : none}</p>
+<h3>${L('每滴體積校準','Drop-volume calibration')}</h3>
+<p>${d.cal.length ? d.cal.map((t,i)=>`${L('第','Trial ')}${i+1}${L('次','')}: ${fmt(t.reading,2)} cm³ / ${t.drops} = ${fmt(t.perDrop,1)} µL`).join('<br>') + `<br><b>${L('平均','Mean')}：${fmt(d.calAvg,1)} µL</b>` : none}</p>
+<h3>${L('結果','Results')}</h3>
+${d.rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>${L('試管','Tube')}</th><th class="l">${L('條件','Conditions')}</th><th>${L('各次滴數','Drops per trial')}</th><th>${L('平均','Mean')}</th><th>${L('範圍','Range')}</th><th>µL</th></tr></thead>
+<tbody>${d.rows.map(r=>`<tr><th>${r.tube}</th><td class="l small">${esc(r.cond)}</td><td>${esc(r.trials.join(', '))}</td><td>${esc(r.mean)}</td><td>${r.range}</td><td>${esc(r.vol)}</td></tr>`).join('')}</tbody></table></div>
+<div class="chart" style="margin-top:10px">${chartSVG()}</div>` : none}
+<h3>${L('結論','Conclusion')}</h3><p>${T.concl.trim() ? esc(T.concl).replace(/\n/g,'<br>') : none}</p>
+<h3>${L('E1 與 E2 的差異','E1 vs E2')}</h3><p>${T.e1e2.trim() ? esc(T.e1e2).replace(/\n/g,'<br>') : none}</p>
+<h3>${L('局限','Limitations')}</h3><p>${T.limits.trim() ? esc(T.limits).replace(/\n/g,'<br>') : none}</p>
+<h3>${L('改良','Improvements')}</h3><p>${T.improve.trim() ? esc(T.improve).replace(/\n/g,'<br>') : none}</p></div>`;
+}
+function reportText(){
+const d = reportData(), T = S.s4.text, nl = '\n';
+let s = `${L('探究青瓜中的抗壞血酸氧化酶對維生素 C 的影響','Effect of cucumber ascorbate oxidase on vitamin C')}${nl}`;
+s += `${L('姓名','Name')}: ${S.student.name} ${L('班別','Class')}: ${S.student.cls}${nl}${nl}`;
+s += `【${L('假設','Hypothesis')}】${nl}${d.pick('hyp')}${nl}${nl}`;
+s += `【${L('變數','Variables')}】${nl}${L('自變量','IV')}: ${d.pick('iv')}${nl}${L('應變量','DV')}: ${d.pick('dv')}${nl}${L('受控變數','CVs')}: ${d.cvs.join('; ')}${nl}${nl}`;
+s += `【${L('每滴體積校準','Drop calibration')}】${nl}${d.cal.map((t,i)=>`${i+1}: ${fmt(t.reading,2)} cm3 / ${t.drops} = ${fmt(t.perDrop,1)} µL`).join(nl)}${d.cal.length?`${nl}${L('平均','Mean')}: ${fmt(d.calAvg,1)} µL`:''}${nl}${nl}`;
+s += `【${L('結果','Results')}】${nl}${L('試管','Tube')}\t${L('條件','Conditions')}\t${L('各次滴數','Trials')}\t${L('平均','Mean')}\t${L('範圍','Range')}\tµL${nl}`;
+d.rows.forEach(r => s += `${r.tube}\t${r.cond}\t${r.trials.join(', ')}\t${r.mean}\t${r.range}\t${r.vol}${nl}`);
+s += `${nl}【${L('結論','Conclusion')}】${nl}${T.concl}${nl}${nl}【${L('E1 與 E2 的差異','E1 vs E2')}】${nl}${T.e1e2}${nl}${nl}【${L('局限','Limitations')}】${nl}${T.limits}${nl}${nl}【${L('改良','Improvements')}】${nl}${T.improve}${nl}`;
+return s;
+}
+function copyReport(){
+const text = reportText(), msg = $('copyMsg');
+const ok = () => msg.textContent = L('已複製！','Copied!');
+const fallback = () => { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
+try { document.execCommand('copy'); ok(); } catch(e){ msg.textContent = L('複製失敗，請手動選取報告文字。','Copy failed; select the report text manually.'); } t.remove(); };
+if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fallback); else fallback();
+}
+/** 提交報告到老師的 Google Sheet（經 Google Apps Script） */
+async function submitReport(){
+  const msg = $('copyMsg');
+  if (!CONFIG.SUBMIT_URL){ msg.textContent = L('老師尚未設定提交網址 (CONFIG.SUBMIT_URL)。','Teacher has not set CONFIG.SUBMIT_URL yet.'); return; }
+  if (!S.student.name.trim() || !S.student.cls.trim()){ msg.textContent = L('請先填寫姓名和班別。','Please enter your name and class first.'); return; }
+  const d = reportData(), T = S.s4.text, means = {};
+  TUBES.forEach(t => { const r = S.results[stdKey(t)], st = r ? stats(r) : null; means[t] = st ? (st.anyOver ? '>' + st.max : +fmt(st.mean,1)) : ''; });
+  const payload = {
+    name: S.student.name.trim(), cls: S.student.cls.trim(),
+    hyp: d.pick('hyp'), iv: d.pick('iv'), dv: d.pick('dv'), cvs: d.cvs.join('；'),
+    calAvg: d.calAvg === null ? '' : +fmt(d.calAvg,1), means,
+    allResults: d.rows.map(r => `${r.tube} [${r.cond}] 各次: ${r.trials.join(', ')} 平均: ${r.mean}`).join('\n'),
+    mcqOk: Q4.filter(q => S.s4.ans[q.id] !== undefined && q.opts[S.s4.ans[q.id]].ok).length + '/' + Q4.length,
+    concl: T.concl, e1e2: T.e1e2, limits: T.limits, improve: T.improve
+  };
+  msg.textContent = L('提交中…','Submitting…');
+  try {
+    await fetch(CONFIG.SUBMIT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+    msg.textContent = L('已提交給老師（' + new Date().toLocaleTimeString() + '）。','Submitted (' + new Date().toLocaleTimeString() + ').');
+  } catch(e){
+    msg.textContent = L('提交失敗，請檢查網絡，或用「複製文字」交給老師。','Submit failed. Check your connection or use “Copy text”.');
+  }
+}
+function printReport(){ buildReport(); document.body.classList.add('print-report'); window.print(); setTimeout(() => document.body.classList.remove('print-report'), 500); }
+
+/* ==========================================================================
+⑫ 啟動
+========================================================================== */
+renderAll();
+</script>
+</body>
+</html>
